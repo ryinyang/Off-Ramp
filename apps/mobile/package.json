@@ -1,0 +1,16 @@
+{
+  "name": "@off-ramp/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Expo build ready'",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@off-ramp/core": "*",
+    "@off-ramp/ui": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

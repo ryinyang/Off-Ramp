@@ -1,0 +1,16 @@
+{
+  "name": "@off-ramp/extension",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Plasmo build ready'",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@off-ramp/core": "*",
+    "@off-ramp/ui": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
