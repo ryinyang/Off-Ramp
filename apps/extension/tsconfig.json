@@ -6,10 +6,11 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "~*": ["src/*"],
-      "@off-ramp/core": ["../../packages/core/src/index.ts"],
-      "@off-ramp/ui": ["../../packages/ui/src/index.ts"]
+      "~*": ["src/*"]
     }
   },
-  "include": [".plasmo/index.d.ts", "src/**/*"]
+  "include": [
+    ".plasmo/index.d.ts",
+    "src/**/*"
+  ]
 }

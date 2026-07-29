@@ -12,8 +12,8 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@off-ramp/core": ["./packages/core/src/index.ts"],
-      "@off-ramp/ui": ["./packages/ui/src/index.ts"]
+      "@off-ramp/core": ["./packages/core/dist/index.d.ts"],
+      "@off-ramp/ui": ["./packages/ui/dist/index.d.ts"]
     }
   }
 }
