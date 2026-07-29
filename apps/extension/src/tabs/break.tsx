@@ -7,6 +7,7 @@ export default function BreakPage() {
   );
 
   useEffect(() => {
+    document.title = "Off-Ramp Break Screen ⏱️";
     const params = new URLSearchParams(window.location.search);
     const durationParam = params.get("duration");
     const messageParam = params.get("message");

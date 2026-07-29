@@ -10,6 +10,7 @@ export default function Popup() {
   const configManager = new ConfigManager();
 
   useEffect(() => {
+    document.title = "Off-Ramp Toolbar Popup";
     loadConfig();
   }, []);
 

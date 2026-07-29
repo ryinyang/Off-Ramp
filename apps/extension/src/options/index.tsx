@@ -19,6 +19,7 @@ export default function Options() {
   const configManager = new ConfigManager();
 
   useEffect(() => {
+    document.title = "Off-Ramp Settings & Rule Configurator";
     loadConfig();
   }, []);
 
