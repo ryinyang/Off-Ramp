@@ -189,9 +189,7 @@ export default function Popup() {
                     <span style={styles.progressText}>
                       Used: <strong>{usedMins.toFixed(1)}</strong> / {allowedMins} mins
                     </span>
-                    <span style={styles.progressPercent}>
-                      {!isMonitoring ? "FROZEN" : `${percentUsed.toFixed(0)}%`}
-                    </span>
+                    <span style={styles.progressPercent}>{percentUsed.toFixed(0)}%</span>
                   </div>
 
                   {/* Visual Progress Bar */}
