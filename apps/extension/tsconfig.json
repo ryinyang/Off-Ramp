@@ -1,8 +1,18 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "~*": [
+        "src/*"
+      ]
+    }
   },
-  "include": ["src/**/*"]
+  "include": [
+    ".plasmo/index.d.ts",
+    "src/**/*"
+  ]
 }

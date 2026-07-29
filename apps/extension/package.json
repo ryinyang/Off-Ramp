@@ -3,14 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "echo 'Plasmo build ready'",
+    "dev": "plasmo dev --target=firefox-mv2",
+    "build": "plasmo build --target=firefox-mv2",
+    "package": "plasmo package --target=firefox-mv2",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@off-ramp/core": "*",
-    "@off-ramp/ui": "*"
+    "@off-ramp/ui": "*",
+    "plasmo": "^0.89.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
+    "@types/chrome": "^0.0.268",
+    "@types/firefox-webext-browser": "^120.0.4",
+    "@types/node": "^20.14.9",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.4.5"
   }
 }
