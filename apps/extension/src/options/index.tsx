@@ -150,35 +150,31 @@ export default function Options() {
     setIsCreatingRule(true);
   };
 
-  // --- JSON Export / Import ---
-  const handleExportJson = () => {
+  // --- Clipboard Config Export / Import ---
+  const handleExportJson = async () => {
     if (!config) return;
-    const jsonStr = configManager.serializeConfig(config);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "off_ramp_config.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    showStatus("Exported configuration JSON file!");
+    try {
+      const jsonStr = configManager.serializeConfig(config);
+      await navigator.clipboard.writeText(jsonStr);
+      showStatus("Configuration copied to clipboard! 📋");
+    } catch (err) {
+      showStatus("Failed to copy to clipboard.");
+    }
   };
 
-  const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const text = evt.target?.result as string;
-        const parsed = configManager.parseConfig(text);
-        await saveConfig(parsed);
-        showStatus("Imported configuration successfully!");
-      } catch (err) {
-        showStatus("Import failed: Invalid JSON format.");
+  const handleImportJson = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.trim()) {
+        showStatus("Clipboard is empty.");
+        return;
       }
-    };
-    reader.readAsText(file);
+      const parsed = configManager.parseConfig(text);
+      await saveConfig(parsed);
+      showStatus("Imported configuration from clipboard! 🚀");
+    } catch (err) {
+      showStatus("Import failed: Invalid JSON format on clipboard.");
+    }
   };
 
   if (!config) {
@@ -444,17 +440,11 @@ export default function Options() {
           <h2 style={styles.sectionTitle}>📦 Configuration Backup & Sync</h2>
           <div style={styles.backupRow}>
             <button style={styles.buttonSecondary} onClick={handleExportJson}>
-              📥 Export JSON Config
+              📋 Copy Config to Clipboard
             </button>
-            <label style={styles.buttonSecondaryLabel}>
-              📤 Import JSON Config
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImportJson}
-                style={{ display: "none" }}
-              />
-            </label>
+            <button style={styles.buttonSecondary} onClick={handleImportJson}>
+              📥 Paste Config from Clipboard
+            </button>
           </div>
         </section>
       </div>

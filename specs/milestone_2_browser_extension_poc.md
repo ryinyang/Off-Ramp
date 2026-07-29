@@ -39,7 +39,7 @@ Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leve
     - Target website selection checkboxes (e.g. `reddit.com`, `tiktok.com`, `youtube.com`).
     - Enable / Disable rule toggle.
   - **Target Website Management**: Add new website domain targets or remove existing ones.
-  - **JSON Export / Import**: Download or upload configuration payloads.
+  - **Clipboard Config Sync**: Export (Copy configuration JSON directly to user's system clipboard) and Import (Paste configuration JSON from system clipboard).
 
 ### 3.3 Break Page UI (`src/tabs/break.tsx`)
 - Full-screen extension break screen displaying countdown timer for $Y$ seconds and custom reflection message.

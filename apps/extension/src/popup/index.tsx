@@ -56,37 +56,35 @@ export default function Popup() {
     await storage.save("off_ramp_config", serialized);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!config) return;
-    const jsonStr = configManager.serializeConfig(config);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "off_ramp_config.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    setStatusMessage("Config exported successfully!");
-    setTimeout(() => setStatusMessage(""), 3000);
+    try {
+      const jsonStr = configManager.serializeConfig(config);
+      await navigator.clipboard.writeText(jsonStr);
+      setStatusMessage("Config copied to clipboard! 📋");
+      setTimeout(() => setStatusMessage(""), 3000);
+    } catch (err) {
+      setStatusMessage("Failed to copy to clipboard.");
+      setTimeout(() => setStatusMessage(""), 3000);
+    }
   };
 
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const text = e.target?.result as string;
-        const parsed = configManager.parseConfig(text);
-        await saveConfig(parsed);
-        setStatusMessage("Config imported successfully!");
+  const handleImport = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.trim()) {
+        setStatusMessage("Clipboard is empty.");
         setTimeout(() => setStatusMessage(""), 3000);
-      } catch (err) {
-        setStatusMessage("Import failed: Invalid JSON file.");
-        setTimeout(() => setStatusMessage(""), 3000);
+        return;
       }
-    };
-    reader.readAsText(file);
+      const parsed = configManager.parseConfig(text);
+      await saveConfig(parsed);
+      setStatusMessage("Config pasted & imported! 🚀");
+      setTimeout(() => setStatusMessage(""), 3000);
+    } catch (err) {
+      setStatusMessage("Import failed: Invalid JSON on clipboard.");
+      setTimeout(() => setStatusMessage(""), 3000);
+    }
   };
 
   const handleOpenOptions = () => {
@@ -210,18 +208,12 @@ export default function Popup() {
         </button>
 
         <button style={styles.buttonSecondary} onClick={handleExport}>
-          Export JSON
+          📋 Copy Config
         </button>
 
-        <label style={styles.buttonSecondaryLabel}>
-          Import JSON
-          <input
-            type="file"
-            accept=".json"
-            onChange={handleImport}
-            style={{ display: "none" }}
-          />
-        </label>
+        <button style={styles.buttonSecondary} onClick={handleImport}>
+          📥 Paste Config
+        </button>
       </div>
     </div>
   );
