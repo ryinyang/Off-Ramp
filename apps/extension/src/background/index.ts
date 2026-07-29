@@ -15,17 +15,53 @@ let currentConfig: UserConfig = ConfigManager.createDefaultConfig();
 
 async function initBackground() {
   console.log("[Off-Ramp] Background Service Worker Initialized");
+  await hydrateAccumulatorsFromStorage();
   await reloadConfig();
 
   // Set up periodic evaluation timer tick every 3 seconds
   setInterval(runEvaluation, 3000);
 }
 
+async function hydrateAccumulatorsFromStorage() {
+  const savedAccJson = await storage.load("off_ramp_accumulators");
+  if (savedAccJson) {
+    try {
+      const accObj = JSON.parse(savedAccJson);
+      if (accObj && typeof accObj === "object") {
+        engine.getTimerService().hydrateAccumulators(accObj as Record<string, number>);
+      }
+    } catch (e) {
+      console.error("[Off-Ramp] Failed to hydrate accumulators from storage:", e);
+    }
+  }
+}
+
 async function reloadConfig() {
   const storedConfigJson = await storage.load("off_ramp_config");
   if (storedConfigJson) {
     try {
-      currentConfig = configManager.parseConfig(storedConfigJson);
+      const parsedConfig = configManager.parseConfig(storedConfigJson);
+
+      // If user updated rule limits and current accumulators are within new limits, clear old active break cooldown
+      if (engine.getActiveBreakUntil() !== null) {
+        let allRulesWithinLimits = true;
+        for (const newRule of parsedConfig.rules) {
+          if (newRule.enabled) {
+            const accSecs = engine.getTimerService().getAccumulatedSeconds(newRule.id);
+            const allowedSecs = newRule.allowedMinutes * 60;
+            if (accSecs >= allowedSecs) {
+              allRulesWithinLimits = false;
+              break;
+            }
+          }
+        }
+        if (allRulesWithinLimits) {
+          console.log("[Off-Ramp] Rule limits updated — clearing active break cooldown.");
+          engine.clearActiveBreak();
+        }
+      }
+
+      currentConfig = parsedConfig;
     } catch (e) {
       console.error("[Off-Ramp] Failed to parse config from storage:", e);
     }
@@ -74,23 +110,13 @@ async function runEvaluation() {
 if (typeof browser !== "undefined" && browser.storage && browser.storage.onChanged) {
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === "local" && changes.off_ramp_config?.newValue) {
-      try {
-        currentConfig = configManager.parseConfig(changes.off_ramp_config.newValue);
-        console.log("[Off-Ramp] Real-time config update received from storage event.");
-      } catch (err) {
-        console.error("[Off-Ramp] Failed to parse updated config from storage event:", err);
-      }
+      reloadConfig();
     }
   });
 } else if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
   chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === "local" && changes.off_ramp_config?.newValue) {
-      try {
-        currentConfig = configManager.parseConfig(changes.off_ramp_config.newValue);
-        console.log("[Off-Ramp] Real-time config update received from storage event.");
-      } catch (err) {
-        console.error("[Off-Ramp] Failed to parse updated config from storage event:", err);
-      }
+      reloadConfig();
     }
   });
 }

@@ -59,6 +59,17 @@ export class TimerService {
   }
 
   /**
+   * Hydrates accumulators map from a key-value record object.
+   */
+  public hydrateAccumulators(data: Record<string, number>): void {
+    for (const [key, value] of Object.entries(data)) {
+      if (typeof value === "number" && !isNaN(value)) {
+        this.accumulators.set(key, value);
+      }
+    }
+  }
+
+  /**
    * Resets accumulated screen time for a key to zero.
    */
   public resetAccumulator(key: string): void {

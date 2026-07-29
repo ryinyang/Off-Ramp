@@ -52,8 +52,7 @@ export class InterruptionEngine {
         return false;
       } else {
         // Break cooldown expired, clear active break state
-        this.activeBreakUntil = null;
-        this.activeBreakMessage = "";
+        this.clearActiveBreak();
       }
     }
 
@@ -116,6 +115,11 @@ export class InterruptionEngine {
     }
 
     return false;
+  }
+
+  public clearActiveBreak(): void {
+    this.activeBreakUntil = null;
+    this.activeBreakMessage = "";
   }
 
   public getTimerService(): TimerService {

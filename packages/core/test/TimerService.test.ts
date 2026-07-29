@@ -45,4 +45,15 @@ describe("TimerService", () => {
     timer.resetAccumulator("reddit.com");
     expect(timer.getAccumulatedSeconds("reddit.com")).toBe(0);
   });
+
+  it("hydrates accumulators from a plain record object", () => {
+    const timer = new TimerService();
+    timer.hydrateAccumulators({
+      "rule-1": 120,
+      "rule-2": 45,
+    });
+
+    expect(timer.getAccumulatedSeconds("rule-1")).toBe(120);
+    expect(timer.getAccumulatedSeconds("rule-2")).toBe(45);
+  });
 });
