@@ -38,6 +38,15 @@ async function initBackground() {
 
 async function runEvaluation() {
   try {
+    const isPaused = (await storage.load("off_ramp_paused")) === "true";
+    if (isPaused) {
+      engine.getTimerService().tick(null);
+      const accumulators = engine.getTimerService().getAllAccumulators();
+      await storage.save("off_ramp_accumulators", JSON.stringify(accumulators));
+      console.log("[Off-Ramp] Monitoring is PAUSED - screen time frozen.");
+      return;
+    }
+
     const currentActivity = await monitor.getCurrentActivity();
     const evaluated = await engine.evaluate(currentConfig);
     const accumulators = engine.getTimerService().getAllAccumulators();

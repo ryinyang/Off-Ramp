@@ -25,6 +25,9 @@ export default function Popup() {
   }, []);
 
   const loadConfig = async () => {
+    const pausedVal = await storage.load("off_ramp_paused");
+    setIsMonitoring(pausedVal !== "true");
+
     const storedJson = await storage.load("off_ramp_config");
     if (storedJson) {
       try {
@@ -37,6 +40,14 @@ export default function Popup() {
     }
     const defaultConfig = ConfigManager.createDefaultConfig();
     setConfig(defaultConfig);
+  };
+
+  const handleTogglePause = async () => {
+    const nextMonitoringState = !isMonitoring;
+    setIsMonitoring(nextMonitoringState);
+    await storage.save("off_ramp_paused", nextMonitoringState ? "false" : "true");
+    setStatusMessage(nextMonitoringState ? "Off-Ramp enabled!" : "Off-Ramp paused!");
+    setTimeout(() => setStatusMessage(""), 2500);
   };
 
   const loadAccumulators = async () => {
@@ -158,8 +169,17 @@ export default function Popup() {
                       <span style={styles.targetDomain}>{target.identifier}</span>
                     </div>
 
-                    <span style={isNearLimit ? styles.badgeLimitNear : styles.badgeRemaining}>
-                      {remainingMins === 0
+                    <span
+                      style={
+                        !isMonitoring
+                          ? styles.badgePaused
+                          : isNearLimit
+                          ? styles.badgeLimitNear
+                          : styles.badgeRemaining
+                      }>
+                      {!isMonitoring
+                        ? "PAUSED ⏸️"
+                        : remainingMins === 0
                         ? "BREAK TRIGGERED"
                         : `${remainingMins.toFixed(1)} mins left`}
                     </span>
@@ -169,7 +189,9 @@ export default function Popup() {
                     <span style={styles.progressText}>
                       Used: <strong>{usedMins.toFixed(1)}</strong> / {allowedMins} mins
                     </span>
-                    <span style={styles.progressPercent}>{percentUsed.toFixed(0)}%</span>
+                    <span style={styles.progressPercent}>
+                      {!isMonitoring ? "FROZEN" : `${percentUsed.toFixed(0)}%`}
+                    </span>
                   </div>
 
                   {/* Visual Progress Bar */}
@@ -178,7 +200,11 @@ export default function Popup() {
                       style={{
                         ...styles.progressBarFill,
                         width: `${percentUsed}%`,
-                        backgroundColor: isNearLimit ? "#EF4444" : "#6366F1",
+                        backgroundColor: !isMonitoring
+                          ? "#64748B"
+                          : isNearLimit
+                          ? "#EF4444"
+                          : "#6366F1",
                       }}
                     />
                   </div>
@@ -203,7 +229,7 @@ export default function Popup() {
       <div style={styles.actionRow}>
         <button
           style={isMonitoring ? styles.buttonPause : styles.buttonActivate}
-          onClick={() => setIsMonitoring(!isMonitoring)}>
+          onClick={handleTogglePause}>
           {isMonitoring ? "Pause Off-Ramp" : "Enable Off-Ramp"}
         </button>
 
@@ -347,6 +373,14 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "10px",
     fontSize: "11px",
     fontWeight: "700",
+  },
+  badgePaused: {
+    backgroundColor: "#334155",
+    color: "#94A3B8",
+    padding: "3px 8px",
+    borderRadius: "10px",
+    fontSize: "11px",
+    fontWeight: "600",
   },
   progressTextRow: {
     display: "flex",
