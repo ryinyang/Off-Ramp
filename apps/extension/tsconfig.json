@@ -6,9 +6,9 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "~*": [
-        "src/*"
-      ]
+      "~*": ["src/*"],
+      "@off-ramp/core": ["../../packages/core/src/index.ts"],
+      "@off-ramp/ui": ["../../packages/ui/src/index.ts"]
     }
   },
   "include": [
