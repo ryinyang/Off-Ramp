@@ -63,7 +63,7 @@ Instead of relying on easy-to-ignore floating overlays or full nuclear app block
 - `ConfigManager`: Zod schema validator and versioned migration pipeline.
 - `TimerService`: Event-driven timestamp delta calculator.
 - `ScheduleEvaluator`: Evaluates active monitoring window for given `Date()` and `Schedule`.
-- `InterruptionEngine`: Main orchestrator connecting `TimerService`, `ScheduleEvaluator`, and `IPlatformTrigger`.
+- `InterruptionEngine`: Main orchestrator connecting `TimerService`, `ScheduleEvaluator`, and `IPlatformTrigger`. Maintains active break cooldown state ($Y$ seconds); if a user attempts to open or switch to any targeted app/website while a break cooldown is active, `InterruptionEngine` instantly fires `fireInterruption` on the new tab/app for the remaining break time.
 
 ### Adapters (Strategy Pattern)
 
