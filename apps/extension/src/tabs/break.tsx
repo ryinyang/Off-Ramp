@@ -51,9 +51,7 @@ export default function BreakPage() {
       `}</style>
       <div style={styles.card}>
         <div style={styles.iconCircle}>{isBreakActive ? "⏱️" : "🎉"}</div>
-        <h1 style={styles.title}>
-          {isBreakActive ? "Off-Ramp Active" : "Break Complete!"}
-        </h1>
+        <h1 style={styles.title}>{isBreakActive ? "Off-Ramp Active" : "Break Complete!"}</h1>
         <p style={styles.message}>"{message}"</p>
 
         <div
@@ -61,7 +59,8 @@ export default function BreakPage() {
             ...styles.timerCircle,
             borderColor: isBreakActive ? "#6366F1" : "#10B981",
             backgroundColor: isBreakActive ? "#312E81" : "#065F46",
-          }}>
+          }}
+        >
           <span style={styles.timerNumber}>{timeLeft}</span>
           <span style={styles.timerLabel}>
             {isBreakActive ? "seconds remaining" : "seconds left"}
@@ -77,10 +76,9 @@ export default function BreakPage() {
         <button
           style={isBreakActive ? styles.buttonDisabled : styles.buttonEnabled}
           disabled={isBreakActive}
-          onClick={() => window.history.back()}>
-          {isBreakActive
-            ? `Return Available in ${timeLeft}s`
-            : "End Break & Return"}
+          onClick={() => window.history.back()}
+        >
+          {isBreakActive ? `Return Available in ${timeLeft}s` : "End Break & Return"}
         </button>
       </div>
     </div>

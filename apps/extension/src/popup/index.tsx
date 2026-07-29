@@ -75,7 +75,7 @@ export default function Popup() {
       await navigator.clipboard.writeText(jsonStr);
       setStatusMessage("Config copied to clipboard! 📋");
       setTimeout(() => setStatusMessage(""), 3000);
-    } catch (err) {
+    } catch (_err) {
       setStatusMessage("Failed to copy to clipboard.");
       setTimeout(() => setStatusMessage(""), 3000);
     }
@@ -93,7 +93,7 @@ export default function Popup() {
       await saveConfig(parsed);
       setStatusMessage("Config pasted & imported! 🚀");
       setTimeout(() => setStatusMessage(""), 3000);
-    } catch (err) {
+    } catch (_err) {
       setStatusMessage("Import failed: Invalid JSON on clipboard.");
       setTimeout(() => setStatusMessage(""), 3000);
     }
@@ -169,20 +169,22 @@ export default function Popup() {
                       !isMonitoring
                         ? styles.badgePaused
                         : isNearLimit
-                        ? styles.badgeLimitNear
-                        : styles.badgeRemaining
-                    }>
+                          ? styles.badgeLimitNear
+                          : styles.badgeRemaining
+                    }
+                  >
                     {!isMonitoring
                       ? "PAUSED ⏸️"
                       : remainingMinutes === 0
-                      ? "BREAK TRIGGERED"
-                      : `${remainingMinutes.toFixed(1)} mins left`}
+                        ? "BREAK TRIGGERED"
+                        : `${remainingMinutes.toFixed(1)} mins left`}
                   </span>
                 </div>
 
                 <div style={styles.progressTextRow}>
                   <span style={styles.progressText}>
-                    Combined Used: <strong>{usedMinutes.toFixed(1)}</strong> / {rule.allowedMinutes} mins
+                    Combined Used: <strong>{usedMinutes.toFixed(1)}</strong> / {rule.allowedMinutes}{" "}
+                    mins
                   </span>
                   <span style={styles.progressPercent}>{percentUsed.toFixed(0)}%</span>
                 </div>
@@ -196,8 +198,8 @@ export default function Popup() {
                       backgroundColor: !isMonitoring
                         ? "#64748B"
                         : isNearLimit
-                        ? "#EF4444"
-                        : "#6366F1",
+                          ? "#EF4444"
+                          : "#6366F1",
                     }}
                   />
                 </div>
@@ -210,7 +212,8 @@ export default function Popup() {
       <div style={styles.actionRow}>
         <button
           style={isMonitoring ? styles.buttonPause : styles.buttonActivate}
-          onClick={handleTogglePause}>
+          onClick={handleTogglePause}
+        >
           {isMonitoring ? "Pause Off-Ramp" : "Enable Off-Ramp"}
         </button>
 

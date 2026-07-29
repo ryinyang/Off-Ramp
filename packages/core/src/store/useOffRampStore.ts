@@ -5,7 +5,7 @@ import { ConfigManager } from "../services/ConfigManager.js";
 export interface OffRampState {
   config: UserConfig;
   isMonitoringEnabled: boolean;
-  
+
   // Actions
   setConfig: (config: UserConfig) => void;
   toggleMonitoring: () => void;

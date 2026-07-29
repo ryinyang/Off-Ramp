@@ -5,7 +5,7 @@ export class WebTabMonitor implements IPlatformMonitor {
   public async getCurrentActivity(): Promise<string | null> {
     return new Promise((resolve) => {
       try {
-        const processTabs = (tabs: any[]) => {
+        const processTabs = (tabs: Array<{ url?: string }>) => {
           if (!tabs || tabs.length === 0 || !tabs[0] || !tabs[0].url) {
             resolve(null);
             return;
@@ -25,13 +25,16 @@ export class WebTabMonitor implements IPlatformMonitor {
 
         const tabsApi = BrowserApi.getTabs();
         if (typeof browser !== "undefined" && tabsApi && tabsApi.query) {
-          tabsApi.query({ active: true, lastFocusedWindow: true }).then((tabs) => {
-            if (tabs && tabs.length > 0) {
-              processTabs(tabs);
-            } else {
-              tabsApi.query({ active: true }).then(processTabs, () => resolve(null));
-            }
-          }, () => resolve(null));
+          tabsApi.query({ active: true, lastFocusedWindow: true }).then(
+            (tabs) => {
+              if (tabs && tabs.length > 0) {
+                processTabs(tabs);
+              } else {
+                tabsApi.query({ active: true }).then(processTabs, () => resolve(null));
+              }
+            },
+            () => resolve(null)
+          );
         } else if (typeof chrome !== "undefined" && tabsApi && tabsApi.query) {
           tabsApi.query({ active: true, lastFocusedWindow: true }, (tabs) => {
             if (tabs && tabs.length > 0) {

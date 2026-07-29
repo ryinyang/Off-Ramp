@@ -6,7 +6,7 @@ import { IPlatformTrigger } from "../src/adapters/IPlatformTrigger.js";
 
 describe("InterruptionEngine", () => {
   it("triggers focus-switch interruption when time limit is exceeded", async () => {
-    let mockActivity: string | null = "com.zhiliaoapp.musically";
+    const mockActivity: string | null = "com.zhiliaoapp.musically";
 
     const mockMonitor: IPlatformMonitor = {
       getCurrentActivity: vi.fn(async () => mockActivity),

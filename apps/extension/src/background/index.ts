@@ -1,8 +1,4 @@
-import {
-  ConfigManager,
-  InterruptionEngine,
-  UserConfig,
-} from "@off-ramp/core";
+import { ConfigManager, InterruptionEngine, UserConfig } from "@off-ramp/core";
 import { ExtensionStorage } from "../adapters/ExtensionStorage";
 import { WebTabMonitor } from "../adapters/WebTabMonitor";
 import { WebTabRedirectTrigger } from "../adapters/WebTabRedirectTrigger";

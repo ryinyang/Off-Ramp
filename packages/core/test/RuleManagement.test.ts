@@ -7,7 +7,10 @@ describe("Rule & Target Management (Settings Behavior)", () => {
   it("adds a new website target cleanly with normalized domain identifier", () => {
     const config = ConfigManager.createDefaultConfig();
     const rawInputDomain = "https://www.youtube.com/watch?v=123";
-    const cleanedDomain = rawInputDomain.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+    const cleanedDomain = rawInputDomain
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .split("/")[0];
 
     const newTarget: Target = {
       id: "target-youtube",

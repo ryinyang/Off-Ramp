@@ -8,7 +8,13 @@
     "test": {
       "dependsOn": ["^build"]
     },
-    "lint": {},
+    "lint": {
+      "outputs": []
+    },
+    "check-types": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true

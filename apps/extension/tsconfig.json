@@ -11,8 +11,5 @@
       "@off-ramp/ui": ["../../packages/ui/src/index.ts"]
     }
   },
-  "include": [
-    ".plasmo/index.d.ts",
-    "src/**/*"
-  ]
+  "include": [".plasmo/index.d.ts", "src/**/*"]
 }

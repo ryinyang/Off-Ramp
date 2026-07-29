@@ -157,7 +157,7 @@ export default function Options() {
       const jsonStr = configManager.serializeConfig(config);
       await navigator.clipboard.writeText(jsonStr);
       showStatus("Configuration copied to clipboard! 📋");
-    } catch (err) {
+    } catch (_err) {
       showStatus("Failed to copy to clipboard.");
     }
   };
@@ -172,7 +172,7 @@ export default function Options() {
       const parsed = configManager.parseConfig(text);
       await saveConfig(parsed);
       showStatus("Imported configuration from clipboard! 🚀");
-    } catch (err) {
+    } catch (_err) {
       showStatus("Import failed: Invalid JSON format on clipboard.");
     }
   };
@@ -201,7 +201,8 @@ export default function Options() {
           <div>
             <h1 style={styles.pageTitle}>🛑 Off-Ramp Settings & Rule Configurator</h1>
             <p style={styles.pageSubtitle}>
-              Configure your screen time limits, target websites, break durations, and reflection messages.
+              Configure your screen time limits, target websites, break durations, and reflection
+              messages.
             </p>
           </div>
         </header>
@@ -214,7 +215,8 @@ export default function Options() {
             <h2 style={styles.sectionTitle}>🌐 Monitored Websites</h2>
             <button
               style={styles.buttonPrimarySmall}
-              onClick={() => setIsAddingTarget(!isAddingTarget)}>
+              onClick={() => setIsAddingTarget(!isAddingTarget)}
+            >
               {isAddingTarget ? "Cancel" : "+ Add Website Target"}
             </button>
           </div>
@@ -253,7 +255,8 @@ export default function Options() {
                 <button
                   style={styles.buttonDangerIcon}
                   title="Remove Target"
-                  onClick={() => handleRemoveTarget(target.id)}>
+                  onClick={() => handleRemoveTarget(target.id)}
+                >
                   ✕
                 </button>
               </div>
@@ -282,7 +285,8 @@ export default function Options() {
                       style={styles.checkbox}
                     />
                     <span style={rule.enabled ? styles.ruleNameActive : styles.ruleNameDisabled}>
-                      Rule (Allowed: {rule.allowedMinutes} mins | Break: {rule.interruptionSeconds}s)
+                      Rule (Allowed: {rule.allowedMinutes} mins | Break: {rule.interruptionSeconds}
+                      s)
                     </span>
                   </div>
 
@@ -292,12 +296,11 @@ export default function Options() {
                       onClick={() => {
                         setEditingRule(rule);
                         setIsCreatingRule(false);
-                      }}>
+                      }}
+                    >
                       Edit
                     </button>
-                    <button
-                      style={styles.buttonDelete}
-                      onClick={() => handleDeleteRule(rule.id)}>
+                    <button style={styles.buttonDelete} onClick={() => handleDeleteRule(rule.id)}>
                       Delete
                     </button>
                   </div>
@@ -375,9 +378,7 @@ export default function Options() {
                   <input
                     type="text"
                     value={editingRule.message}
-                    onChange={(e) =>
-                      setEditingRule({ ...editingRule, message: e.target.value })
-                    }
+                    onChange={(e) => setEditingRule({ ...editingRule, message: e.target.value })}
                     style={styles.inputField}
                     required
                   />
@@ -402,9 +403,7 @@ export default function Options() {
                               } else {
                                 setEditingRule({
                                   ...editingRule,
-                                  targetIds: editingRule.targetIds.filter(
-                                    (id) => id !== t.id
-                                  ),
+                                  targetIds: editingRule.targetIds.filter((id) => id !== t.id),
                                 });
                               }
                             }}
@@ -426,7 +425,8 @@ export default function Options() {
                     onClick={() => {
                       setEditingRule(null);
                       setIsCreatingRule(false);
-                    }}>
+                    }}
+                  >
                     Cancel
                   </button>
                 </div>

@@ -1,6 +1,6 @@
 # Off-Ramp 🛑📱
 
-**Off-Ramp** is an open-source, cross-platform app designed to interrupt doom scrolling. 
+**Off-Ramp** is an open-source, cross-platform app designed to interrupt doom scrolling.
 
 Unlike traditional anti-procrastination apps that hard-block apps or rely on floating overlays, Off-Ramp uses an **Opal-style focus switch**: when your screen time limit is reached on a monitored app or website, Off-Ramp forcibly intercepts entry, shields the app/site, and pulls your focus directly to a mindful break screen.
 
@@ -21,21 +21,23 @@ off_ramp/
 ```
 
 ### Core Architecture (`@off-ramp/core`)
+
 The brain of Off-Ramp lives in `packages/core` with zero platform or UI dependencies:
-* **Domain Schemas (`src/types/config.ts`)**: Zod-validated data models for `Target`, `Schedule`, `Rule`, and versioned `UserConfig`.
-* **Strategy Contracts (`src/adapters/`)**:
-  * `IPlatformMonitor`: Interface for querying current active application/website.
-  * `IPlatformTrigger`: Interface for executing Opal-style focus-switch interruptions.
-  * `IStorageProvider`: Interface for local state persistence.
-* **Core Services (`src/services/`)**:
-  * `TimerService`: Tracks screen time at the **Rule Level** (`rule.id`) using event-driven timestamp diffing.
-  * `ScheduleEvaluator`: Evaluates active monitoring time windows.
-  * `InterruptionEngine`: Main orchestrator firing focus-switch triggers when rule limits are reached and enforcing active break cooldowns across all tabs/apps.
-  * `ConfigManager`: Manages Zod parsing, default initialization, and schema migrations.
-* **Core Utilities (`src/utils/`)**:
-  * `DomainUtils`: Canonical URL normalization, exact/subdomain matching, and target filtering.
-  * `TimeUtils`: Screen time unit conversion, rule-level time calculations, and progress percentages.
-* **State Management (`src/store/useOffRampStore.ts`)**: Universal Zustand store supporting local state mutation and direct clipboard config sync.
+
+- **Domain Schemas (`src/types/config.ts`)**: Zod-validated data models for `Target`, `Schedule`, `Rule`, and versioned `UserConfig`.
+- **Strategy Contracts (`src/adapters/`)**:
+  - `IPlatformMonitor`: Interface for querying current active application/website.
+  - `IPlatformTrigger`: Interface for executing Opal-style focus-switch interruptions.
+  - `IStorageProvider`: Interface for local state persistence.
+- **Core Services (`src/services/`)**:
+  - `TimerService`: Tracks screen time at the **Rule Level** (`rule.id`) using event-driven timestamp diffing.
+  - `ScheduleEvaluator`: Evaluates active monitoring time windows.
+  - `InterruptionEngine`: Main orchestrator firing focus-switch triggers when rule limits are reached and enforcing active break cooldowns across all tabs/apps.
+  - `ConfigManager`: Manages Zod parsing, default initialization, and schema migrations.
+- **Core Utilities (`src/utils/`)**:
+  - `DomainUtils`: Canonical URL normalization, exact/subdomain matching, and target filtering.
+  - `TimeUtils`: Screen time unit conversion, rule-level time calculations, and progress percentages.
+- **State Management (`src/store/useOffRampStore.ts`)**: Universal Zustand store supporting local state mutation and direct clipboard config sync.
 
 ---
 
@@ -59,8 +61,9 @@ The brain of Off-Ramp lives in `packages/core` with zero platform or UI dependen
 ## ⚡ Quick Start
 
 ### Prerequisites
-* **Node.js**: v18.0.0 or higher
-* **npm**: v9.0.0 or higher
+
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
 
 ### Installation & Build
 
@@ -100,8 +103,8 @@ npm run test
 
 ## 🛠️ Development Commands
 
-| Command | Action |
-| :--- | :--- |
-| `npm run build` | Builds all packages (`packages/core`, `packages/ui`, `apps/extension`, `apps/mobile`) via Turborepo. |
-| `npm run test` | Runs the Vitest test suite across `@off-ramp/core`. |
-| `npm run dev --workspace=@off-ramp/extension` | Starts Plasmo dev server with hot-reloading for Firefox extension. |
+| Command                                       | Action                                                                                               |
+| :-------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
+| `npm run build`                               | Builds all packages (`packages/core`, `packages/ui`, `apps/extension`, `apps/mobile`) via Turborepo. |
+| `npm run test`                                | Runs the Vitest test suite across `@off-ramp/core`.                                                  |
+| `npm run dev --workspace=@off-ramp/extension` | Starts Plasmo dev server with hot-reloading for Firefox extension.                                   |

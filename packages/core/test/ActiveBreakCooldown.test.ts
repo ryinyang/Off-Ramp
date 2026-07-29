@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
-import { InterruptionEngine, ConfigManager, IPlatformMonitor, IPlatformTrigger } from "../src/index.js";
+import {
+  InterruptionEngine,
+  ConfigManager,
+  IPlatformMonitor,
+  IPlatformTrigger,
+} from "../src/index.js";
 
 describe("ActiveBreakCooldown Enforcement", () => {
   it("enforces remaining break cooldown when opening another target website/app during active break", async () => {
