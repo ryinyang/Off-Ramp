@@ -61,9 +61,9 @@ Instead of relying on easy-to-ignore floating overlays or full nuclear app block
 
 ### Core Services (`packages/core/src/services/`)
 - `ConfigManager`: Zod schema validator and versioned migration pipeline.
-- `TimerService`: Event-driven timestamp delta calculator.
+- `TimerService`: Event-driven timestamp delta calculator tracking screen time at the **Rule Level** (`rule.id`).
 - `ScheduleEvaluator`: Evaluates active monitoring window for given `Date()` and `Schedule`.
-- `InterruptionEngine`: Main orchestrator connecting `TimerService`, `ScheduleEvaluator`, and `IPlatformTrigger`. Maintains active break cooldown state ($Y$ seconds); if a user attempts to open or switch to any targeted app/website while a break cooldown is active, `InterruptionEngine` instantly fires `fireInterruption` on the new tab/app for the remaining break time.
+- `InterruptionEngine`: Main orchestrator connecting `TimerService`, `ScheduleEvaluator`, and `IPlatformTrigger`. Accumulates time into matching `rule.id` buckets (summing screen time across all targets covered by each rule) and triggers interruptions when a rule's combined limit is reached. Maintains active break cooldown state ($Y$ seconds).
 
 ### Adapters (Strategy Pattern)
 

@@ -141,87 +141,77 @@ export default function Popup() {
 
       {statusMessage && <div style={styles.alertMessage}>{statusMessage}</div>}
 
-      {/* Real-time Target Screen Time & Remaining Time Cards */}
+      {/* Real-time Rule-Level Screen Time & Remaining Time Cards */}
       <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Monitored Websites & Time Remaining</h2>
+        <h2 style={styles.sectionTitle}>Active Rules & Screen Time Remaining</h2>
         <div style={styles.targetList}>
-          {config.targets
-            .filter((t) => t.type === "website")
-            .map((target) => {
-              // Find rule applying to this target
-              const matchingRule = config.rules.find(
-                (r) => r.enabled && r.targetIds.includes(target.id)
-              );
+          {config.rules.map((rule) => {
+            const allowedMins = rule.allowedMinutes;
+            const accumulatedSecs = accumulators[rule.id] || 0;
+            const usedMins = accumulatedSecs / 60;
+            const remainingMins = Math.max(0, allowedMins - usedMins);
+            const percentUsed = Math.min(100, Math.max(0, (usedMins / allowedMins) * 100));
 
-              const allowedMins = matchingRule ? matchingRule.allowedMinutes : 15;
-              const accumulatedSecs = accumulators[target.identifier] || 0;
-              const usedMins = accumulatedSecs / 60;
-              const remainingMins = Math.max(0, allowedMins - usedMins);
-              const percentUsed = Math.min(100, Math.max(0, (usedMins / allowedMins) * 100));
+            const isNearLimit = percentUsed >= 85;
 
-              const isNearLimit = percentUsed >= 85;
+            const assignedTargetNames = config.targets
+              .filter((t) => rule.targetIds.includes(t.id))
+              .map((t) => t.name)
+              .join(", ");
 
-              return (
-                <div key={target.id} style={styles.targetCardDetailed}>
-                  <div style={styles.targetCardHeader}>
-                    <div>
-                      <span style={styles.targetName}>{target.name}</span>
-                      <span style={styles.targetDomain}>{target.identifier}</span>
-                    </div>
-
-                    <span
-                      style={
-                        !isMonitoring
-                          ? styles.badgePaused
-                          : isNearLimit
-                          ? styles.badgeLimitNear
-                          : styles.badgeRemaining
-                      }>
-                      {!isMonitoring
-                        ? "PAUSED ⏸️"
-                        : remainingMins === 0
-                        ? "BREAK TRIGGERED"
-                        : `${remainingMins.toFixed(1)} mins left`}
+            return (
+              <div key={rule.id} style={styles.targetCardDetailed}>
+                <div style={styles.targetCardHeader}>
+                  <div>
+                    <span style={styles.targetName}>
+                      Limit: {rule.allowedMinutes} mins | Break: {rule.interruptionSeconds}s
+                    </span>
+                    <span style={styles.targetDomain}>
+                      Targets: {assignedTargetNames || "None"}
                     </span>
                   </div>
 
-                  <div style={styles.progressTextRow}>
-                    <span style={styles.progressText}>
-                      Used: <strong>{usedMins.toFixed(1)}</strong> / {allowedMins} mins
-                    </span>
-                    <span style={styles.progressPercent}>{percentUsed.toFixed(0)}%</span>
-                  </div>
-
-                  {/* Visual Progress Bar */}
-                  <div style={styles.progressBarTrack}>
-                    <div
-                      style={{
-                        ...styles.progressBarFill,
-                        width: `${percentUsed}%`,
-                        backgroundColor: !isMonitoring
-                          ? "#64748B"
-                          : isNearLimit
-                          ? "#EF4444"
-                          : "#6366F1",
-                      }}
-                    />
-                  </div>
+                  <span
+                    style={
+                      !isMonitoring
+                        ? styles.badgePaused
+                        : isNearLimit
+                        ? styles.badgeLimitNear
+                        : styles.badgeRemaining
+                    }>
+                    {!isMonitoring
+                      ? "PAUSED ⏸️"
+                      : remainingMins === 0
+                      ? "BREAK TRIGGERED"
+                      : `${remainingMins.toFixed(1)} mins left`}
+                  </span>
                 </div>
-              );
-            })}
-        </div>
-      </div>
 
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Active Rules</h2>
-        {config.rules.map((rule) => (
-          <div key={rule.id} style={styles.ruleCard}>
-            <p style={styles.ruleText}>
-              Limit: <strong>{rule.allowedMinutes} mins</strong> | Break: <strong>{rule.interruptionSeconds}s</strong>
-            </p>
-            <p style={styles.ruleMessage}>"{rule.message}"</p>
-          </div>
-        ))}
+                <div style={styles.progressTextRow}>
+                  <span style={styles.progressText}>
+                    Combined Used: <strong>{usedMins.toFixed(1)}</strong> / {allowedMins} mins
+                  </span>
+                  <span style={styles.progressPercent}>{percentUsed.toFixed(0)}%</span>
+                </div>
+
+                {/* Visual Progress Bar */}
+                <div style={styles.progressBarTrack}>
+                  <div
+                    style={{
+                      ...styles.progressBarFill,
+                      width: `${percentUsed}%`,
+                      backgroundColor: !isMonitoring
+                        ? "#64748B"
+                        : isNearLimit
+                        ? "#EF4444"
+                        : "#6366F1",
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div style={styles.actionRow}>

@@ -19,9 +19,9 @@ Establish the Turborepo workspace infrastructure, universal domain types, core b
 
 ### 3.2 Core Services & Interfaces
 - `ConfigManager`: Zod-validated configuration parser with version migration handler.
-- `TimerService`: Event-based timestamp delta calculator (avoids battery-draining continuous polling loops).
+- `TimerService`: Event-based timestamp delta calculator tracking screen time at the **Rule Level** (`rule.id`).
 - `ScheduleEvaluator`: Pure utility returning `isMonitoringActive(schedule, date)`.
-- `InterruptionEngine`: Main orchestrator connecting `TimerService`, `ScheduleEvaluator`, and `IPlatformTrigger`. Tracks active break cooldown ($Y$ seconds); if user opens or switches to any targeted app/site during an active break, immediately fires `fireInterruption` for remaining break time.
+- `InterruptionEngine`: Main orchestrator connecting `TimerService`, `ScheduleEvaluator`, and `IPlatformTrigger`. Accumulates time per `rule.id` bucket (summing screen time across all targets assigned to each rule) and triggers interruptions when a rule's combined allowed time is reached. Tracks active break cooldown ($Y$ seconds).
 
 ### 3.3 Platform Adapter Interfaces
 - `IPlatformMonitor`: `getCurrentActivity(): string | null`

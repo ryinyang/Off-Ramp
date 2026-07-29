@@ -25,8 +25,8 @@ export class InterruptionEngine {
   }
 
   /**
-   * Main evaluation loop step. Wakes up, checks current activity, increments timers,
-   * enforces active break cooldowns, and fires interruption trigger if limits are exceeded.
+   * Main evaluation loop step. Wakes up, checks current activity, increments rule-level timers,
+   * enforces active break cooldowns, and fires interruption trigger if rule limits are exceeded.
    */
   public async evaluate(config: UserConfig, now: Date = new Date()): Promise<boolean> {
     const nowMs = now.getTime();
@@ -67,14 +67,14 @@ export class InterruptionEngine {
     const currentActivity = await this.monitor.getCurrentActivity();
 
     if (!currentActivity) {
-      this.timerService.tick(null, nowMs);
+      this.timerService.tickRules([], nowMs);
       return false;
     }
 
     const currentLower = currentActivity.toLowerCase();
 
-    // Find target matching current activity (checking exact match or domain suffixes)
-    const matchingTarget = config.targets.find((t) => {
+    // Find all targets matching current activity
+    const matchingTargets = config.targets.filter((t) => {
       const targetLower = t.identifier.toLowerCase();
       return (
         currentLower === targetLower ||
@@ -83,17 +83,17 @@ export class InterruptionEngine {
       );
     });
 
-    // Accumulate time under matchingTarget.identifier if matched, otherwise raw currentActivity
-    const activeKey = matchingTarget ? matchingTarget.identifier : currentActivity;
-    this.timerService.tick(activeKey, nowMs);
-
-    if (!matchingTarget) {
+    if (matchingTargets.length === 0) {
+      this.timerService.tickRules([], nowMs);
       return false;
     }
 
-    // Find rules applying to this target
+    const matchingTargetIds = new Set(matchingTargets.map((t) => t.id));
+
+    // Find rules that cover any of the matching targets and are currently active on schedule
+    const activeRuleIds: string[] = [];
     const applicableRules = config.rules.filter(
-      (r) => r.enabled && r.targetIds.includes(matchingTarget.id)
+      (r) => r.enabled && r.targetIds.some((id) => matchingTargetIds.has(id))
     );
 
     for (const rule of applicableRules) {
@@ -101,9 +101,20 @@ export class InterruptionEngine {
       if (!schedule) continue;
 
       const isActive = this.scheduleEvaluator.isMonitoringActive(schedule, now);
-      if (!isActive) continue;
+      if (isActive) {
+        activeRuleIds.push(rule.id);
+      }
+    }
 
-      const accumulatedSeconds = this.timerService.getAccumulatedSeconds(matchingTarget.identifier);
+    // Accumulate screen time into matching rule buckets
+    this.timerService.tickRules(activeRuleIds, nowMs);
+
+    // Check if any rule's aggregated screen time reached its allowed limit
+    for (const ruleId of activeRuleIds) {
+      const rule = config.rules.find((r) => r.id === ruleId);
+      if (!rule) continue;
+
+      const accumulatedSeconds = this.timerService.getAccumulatedSeconds(rule.id);
       const allowedSeconds = rule.allowedMinutes * 60;
 
       if (accumulatedSeconds >= allowedSeconds) {
@@ -113,8 +124,8 @@ export class InterruptionEngine {
 
         await this.trigger.fireInterruption(rule.interruptionSeconds, rule.message);
 
-        // Reset timer bucket after interruption handles focus switch
-        this.timerService.resetAccumulator(matchingTarget.identifier);
+        // Reset rule accumulator bucket after interruption triggers
+        this.timerService.resetAccumulator(rule.id);
 
         return true;
       }

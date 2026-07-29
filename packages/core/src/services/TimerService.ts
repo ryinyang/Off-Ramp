@@ -1,38 +1,54 @@
 export class TimerService {
-  private activeTargetIdentifier: string | null = null;
-  private lastTickTimestamp: number | null = null;
-  private accumulators: Map<string, number> = new Map(); // identifier -> accumulated seconds
+  private ruleLastTickTimestamps: Map<string, number> = new Map(); // key -> lastTick timestamp
+  private accumulators: Map<string, number> = new Map(); // key -> accumulated seconds
 
   /**
-   * Called when active target changes or ticks.
-   * Calculates elapsed seconds since last timestamp and accumulates time.
+   * Called on evaluation step with array of active keys (e.g. active rule IDs).
+   * Calculates elapsed seconds for each active key and accumulates screen time.
    */
-  public tick(currentIdentifier: string | null, nowTimestamp: number = Date.now()): void {
-    if (this.activeTargetIdentifier && this.activeTargetIdentifier === currentIdentifier) {
-      if (this.lastTickTimestamp !== null) {
-        const elapsedSeconds = (nowTimestamp - this.lastTickTimestamp) / 1000;
+  public tickRules(activeKeys: string[], nowTimestamp: number = Date.now()): void {
+    const activeSet = new Set(activeKeys);
+
+    for (const key of activeKeys) {
+      const lastTick = this.ruleLastTickTimestamps.get(key);
+      if (lastTick !== undefined) {
+        const elapsedSeconds = (nowTimestamp - lastTick) / 1000;
         if (elapsedSeconds > 0) {
-          const currentTotal = this.accumulators.get(this.activeTargetIdentifier) || 0;
-          this.accumulators.set(this.activeTargetIdentifier, currentTotal + elapsedSeconds);
+          const currentTotal = this.accumulators.get(key) || 0;
+          this.accumulators.set(key, currentTotal + elapsedSeconds);
         }
       }
-    } else {
-      // Switched targets
-      this.activeTargetIdentifier = currentIdentifier;
+      this.ruleLastTickTimestamps.set(key, nowTimestamp);
     }
 
-    this.lastTickTimestamp = nowTimestamp;
+    // For keys no longer active, delete lastTick timestamp so time spent paused is not accumulated
+    for (const [key] of this.ruleLastTickTimestamps.entries()) {
+      if (!activeSet.has(key)) {
+        this.ruleLastTickTimestamps.delete(key);
+      }
+    }
   }
 
   /**
-   * Returns accumulated screen time in seconds for a target identifier.
+   * Legacy single-key tick wrapper for backward compatibility.
    */
-  public getAccumulatedSeconds(identifier: string): number {
-    return this.accumulators.get(identifier) || 0;
+  public tick(currentKey: string | null, nowTimestamp: number = Date.now()): void {
+    if (currentKey) {
+      this.tickRules([currentKey], nowTimestamp);
+    } else {
+      this.tickRules([], nowTimestamp);
+    }
   }
 
   /**
-   * Returns a plain record object of all accumulated target seconds.
+   * Returns accumulated screen time in seconds for a key (e.g. rule ID).
+   */
+  public getAccumulatedSeconds(key: string): number {
+    return this.accumulators.get(key) || 0;
+  }
+
+  /**
+   * Returns a plain record object of all accumulated seconds.
    */
   public getAllAccumulators(): Record<string, number> {
     const result: Record<string, number> = {};
@@ -43,18 +59,18 @@ export class TimerService {
   }
 
   /**
-   * Resets accumulated screen time for a target identifier to zero.
+   * Resets accumulated screen time for a key to zero.
    */
-  public resetAccumulator(identifier: string): void {
-    this.accumulators.set(identifier, 0);
+  public resetAccumulator(key: string): void {
+    this.accumulators.set(key, 0);
+    this.ruleLastTickTimestamps.delete(key);
   }
 
   /**
-   * Clears all accumulators.
+   * Clears all accumulators and timestamps.
    */
   public resetAll(): void {
     this.accumulators.clear();
-    this.activeTargetIdentifier = null;
-    this.lastTickTimestamp = null;
+    this.ruleLastTickTimestamps.clear();
   }
 }

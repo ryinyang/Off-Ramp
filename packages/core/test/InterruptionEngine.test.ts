@@ -40,4 +40,41 @@ describe("InterruptionEngine", () => {
     expect(fired).toBe(true);
     expect(mockTrigger.fireInterruption).toHaveBeenCalledWith(30, config.rules[0].message);
   });
+
+  it("accumulates screen time at the rule level across multiple targeted websites", async () => {
+    let currentDomain: string | null = "reddit.com";
+
+    const mockMonitor: IPlatformMonitor = {
+      getCurrentActivity: vi.fn(async () => currentDomain),
+    };
+
+    const mockTrigger: IPlatformTrigger = {
+      fireInterruption: vi.fn(async () => {}),
+    };
+
+    const engine = new InterruptionEngine(mockMonitor, mockTrigger);
+    const config = ConfigManager.createDefaultConfig();
+
+    // Rule 0 targets both reddit.com and com.zhiliaoapp.musically with a 2-minute limit (120s)
+    config.rules[0].allowedMinutes = 2;
+    config.rules[0].targetIds = ["target-reddit", "target-tiktok"];
+
+    const startTime = new Date("2026-07-27T10:00:00Z");
+
+    // Spend 45 seconds on Reddit
+    await engine.evaluate(config, startTime);
+    await engine.evaluate(config, new Date(startTime.getTime() + 45000));
+    expect(engine.getTimerService().getAccumulatedSeconds(config.rules[0].id)).toBe(45);
+
+    // Switch to TikTok and spend 80 seconds on TikTok (45s Reddit + 80s TikTok = 125s total > 120s limit)
+    currentDomain = "com.zhiliaoapp.musically";
+    await engine.evaluate(config, new Date(startTime.getTime() + 45000));
+    const fired = await engine.evaluate(config, new Date(startTime.getTime() + 125000));
+
+    expect(fired).toBe(true);
+    expect(mockTrigger.fireInterruption).toHaveBeenCalledWith(
+      config.rules[0].interruptionSeconds,
+      config.rules[0].message
+    );
+  });
 });

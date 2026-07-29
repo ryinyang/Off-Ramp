@@ -22,10 +22,10 @@ Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leve
 ### 3.1 Popup UI (`src/popup/index.tsx`)
 - Quick extension toolbar status popup.
 - **Monitoring Status Badge**: Shows ACTIVE / PAUSED status with toggle control.
-- **Real-Time Target Screen Time & Remaining Time Cards**:
-  - Displays each monitored website target (e.g., `reddit.com`, `youtube.com`).
-  - Displays real-time accumulated screen time and remaining time until interruption (e.g. `1.2 / 15.0 mins` | `13.8 mins remaining`).
-  - Highlights active target domain when user is currently browsing it.
+- **Real-Time Rule Screen Time & Remaining Time Cards**:
+  - Displays each rule and its assigned target websites (e.g., `Rule: Reddit, TikTok, YouTube`).
+  - Displays aggregated real-time accumulated screen time (sum of all covered websites) vs. allowed limit ($A / X$ mins) and remaining time until interruption.
+  - Highlights active rule and domain when user is currently browsing one of its assigned targets.
 - **Rule Summary List**: Displays active rules and break durations.
 - **Settings Navigation**: **"Settings & Rule Configurator ⚙️"** button launching the options page (`chrome.runtime.openOptionsPage()`).
 

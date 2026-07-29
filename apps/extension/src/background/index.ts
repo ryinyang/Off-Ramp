@@ -52,12 +52,16 @@ async function runEvaluation() {
     const accumulators = engine.getTimerService().getAllAccumulators();
     await storage.save("off_ramp_accumulators", JSON.stringify(accumulators));
 
-    const accumulated = currentActivity
-      ? engine.getTimerService().getAccumulatedSeconds(currentActivity)
-      : 0;
+    const ruleLogs = currentConfig.rules
+      .map((r) => {
+        const acc = accumulators[r.id] || 0;
+        const limitSecs = r.allowedMinutes * 60;
+        return `${r.id}: ${acc.toFixed(1)}s/${limitSecs}s`;
+      })
+      .join(" | ");
 
     console.log(
-      `[Off-Ramp] Tick | Activity: "${currentActivity ?? "none"}" | Accumulated: ${accumulated.toFixed(1)}s | Triggered: ${evaluated}`
+      `[Off-Ramp] Tick | Activity: "${currentActivity ?? "none"}" | Rule Accumulators: [ ${ruleLogs} ] | Triggered: ${evaluated}`
     );
   } catch (err) {
     console.error("[Off-Ramp] Evaluation error:", err);
