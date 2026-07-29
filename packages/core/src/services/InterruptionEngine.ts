@@ -33,16 +33,27 @@ export class InterruptionEngine {
     }
 
     const currentActivity = await this.monitor.getCurrentActivity();
-    this.timerService.tick(currentActivity, now.getTime());
 
     if (!currentActivity) {
+      this.timerService.tick(null, now.getTime());
       return false;
     }
 
-    // Find target matching current activity
-    const matchingTarget = config.targets.find(
-      (t) => t.identifier.toLowerCase() === currentActivity.toLowerCase()
-    );
+    const currentLower = currentActivity.toLowerCase();
+
+    // Find target matching current activity (checking exact match or domain suffixes)
+    const matchingTarget = config.targets.find((t) => {
+      const targetLower = t.identifier.toLowerCase();
+      return (
+        currentLower === targetLower ||
+        currentLower.endsWith("." + targetLower) ||
+        targetLower.endsWith("." + currentLower)
+      );
+    });
+
+    // Accumulate time under matchingTarget.identifier if matched, otherwise raw currentActivity
+    const activeKey = matchingTarget ? matchingTarget.identifier : currentActivity;
+    this.timerService.tick(activeKey, now.getTime());
 
     if (!matchingTarget) {
       return false;

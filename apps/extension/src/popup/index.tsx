@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ConfigManager, UserConfig } from "@off-ramp/core";
+import { ExtensionStorage } from "../adapters/ExtensionStorage";
 
 export default function Popup() {
   const [config, setConfig] = useState<UserConfig | null>(null);
@@ -12,17 +13,17 @@ export default function Popup() {
     loadConfig();
   }, []);
 
+  const storage = new ExtensionStorage();
+
   const loadConfig = async () => {
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      const res = await chrome.storage.local.get("off_ramp_config");
-      if (res.off_ramp_config) {
-        try {
-          const parsed = configManager.parseConfig(res.off_ramp_config);
-          setConfig(parsed);
-          return;
-        } catch (e) {
-          console.error("Config parse failed:", e);
-        }
+    const storedJson = await storage.load("off_ramp_config");
+    if (storedJson) {
+      try {
+        const parsed = configManager.parseConfig(storedJson);
+        setConfig(parsed);
+        return;
+      } catch (e) {
+        console.error("Config parse failed:", e);
       }
     }
     // Default fallback
@@ -33,9 +34,7 @@ export default function Popup() {
   const saveConfig = async (newConfig: UserConfig) => {
     setConfig(newConfig);
     const serialized = configManager.serializeConfig(newConfig);
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      await chrome.storage.local.set({ off_ramp_config: serialized });
-    }
+    await storage.save("off_ramp_config", serialized);
   };
 
   const handleExport = () => {

@@ -24,10 +24,10 @@ export class ConfigManager {
       schedules: [
         {
           id: "sched-workdays",
-          name: "Workdays",
-          activeDays: [1, 2, 3, 4, 5], // Mon - Fri
-          startTime: "09:00",
-          endTime: "17:00",
+          name: "All Day Every Day",
+          activeDays: [1, 2, 3, 4, 5, 6, 7], // Mon - Sun
+          startTime: "00:00",
+          endTime: "23:59",
           enabled: true,
         },
       ],

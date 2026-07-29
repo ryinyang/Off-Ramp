@@ -23,10 +23,12 @@ async function initBackground() {
   if (storedConfigJson) {
     try {
       currentConfig = configManager.parseConfig(storedConfigJson);
+      console.log("[Off-Ramp] Loaded saved config from storage");
     } catch (e) {
       console.error("[Off-Ramp] Failed to load stored config, using defaults:", e);
     }
   } else {
+    console.log("[Off-Ramp] No config found in storage, saving defaults");
     await storage.save("off_ramp_config", configManager.serializeConfig(currentConfig));
   }
 
@@ -36,30 +38,33 @@ async function initBackground() {
 
 async function runEvaluation() {
   try {
-    await engine.evaluate(currentConfig);
+    const currentActivity = await monitor.getCurrentActivity();
+    const evaluated = await engine.evaluate(currentConfig);
+    const accumulated = currentActivity
+      ? engine.getTimerService().getAccumulatedSeconds(currentActivity)
+      : 0;
+
+    console.log(
+      `[Off-Ramp] Tick | Activity: "${currentActivity ?? "none"}" | Accumulated: ${accumulated.toFixed(1)}s | Triggered: ${evaluated}`
+    );
   } catch (err) {
     console.error("[Off-Ramp] Evaluation error:", err);
   }
 }
 
 // Event Listeners for Tab Switches and URL Navigation
-if (typeof chrome !== "undefined" && chrome.tabs) {
-  chrome.tabs.onActivated.addListener(() => {
-    runEvaluation();
-  });
-  chrome.tabs.onUpdated.addListener((_, changeInfo) => {
+if (typeof browser !== "undefined" && browser.tabs) {
+  browser.tabs.onActivated.addListener(() => runEvaluation());
+  browser.tabs.onUpdated.addListener((_, changeInfo) => {
     if (changeInfo.status === "complete" || changeInfo.url) {
       runEvaluation();
     }
   });
-  chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === "local" && changes.off_ramp_config) {
-      try {
-        currentConfig = configManager.parseConfig(changes.off_ramp_config.newValue);
-        console.log("[Off-Ramp] Background config updated live");
-      } catch (e) {
-        console.error("[Off-Ramp] Live config parse failed:", e);
-      }
+} else if (typeof chrome !== "undefined" && chrome.tabs) {
+  chrome.tabs.onActivated.addListener(() => runEvaluation());
+  chrome.tabs.onUpdated.addListener((_, changeInfo) => {
+    if (changeInfo.status === "complete" || changeInfo.url) {
+      runEvaluation();
     }
   });
 }

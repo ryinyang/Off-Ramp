@@ -5,28 +5,50 @@ export class WebTabRedirectTrigger implements IPlatformTrigger {
     const encodedMessage = encodeURIComponent(message);
     let breakPageUrl: string | undefined;
 
-    if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL) {
-      breakPageUrl = chrome.runtime.getURL(
+    if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getURL) {
+      breakPageUrl = browser.runtime.getURL(
         `tabs/break.html?duration=${durationSeconds}&message=${encodedMessage}`
       );
-    } else if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getURL) {
-      breakPageUrl = browser.runtime.getURL(
+    } else if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL) {
+      breakPageUrl = chrome.runtime.getURL(
         `tabs/break.html?duration=${durationSeconds}&message=${encodedMessage}`
       );
     }
 
     if (!breakPageUrl) return;
 
-    if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.query) {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tabs && tabs.length > 0 && tabs[0].id !== undefined) {
-        await chrome.tabs.update(tabs[0].id, { url: breakPageUrl });
+    const targetUrl = breakPageUrl;
+
+    const performUpdate = (tabId: number) => {
+      if (typeof browser !== "undefined" && browser.tabs && browser.tabs.update) {
+        browser.tabs.update(tabId, { url: targetUrl });
+      } else if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.update) {
+        chrome.tabs.update(tabId, { url: targetUrl });
       }
-    } else if (typeof browser !== "undefined" && browser.tabs && browser.tabs.query) {
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    };
+
+    if (typeof browser !== "undefined" && browser.tabs && browser.tabs.query) {
+      const tabs = await browser.tabs.query({ active: true, lastFocusedWindow: true });
       if (tabs && tabs.length > 0 && tabs[0].id !== undefined) {
-        await browser.tabs.update(tabs[0].id, { url: breakPageUrl });
+        performUpdate(tabs[0].id);
+      } else {
+        const allTabs = await browser.tabs.query({ active: true });
+        if (allTabs && allTabs.length > 0 && allTabs[0].id !== undefined) {
+          performUpdate(allTabs[0].id);
+        }
       }
+    } else if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.query) {
+      chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+        if (tabs && tabs.length > 0 && tabs[0].id !== undefined) {
+          performUpdate(tabs[0].id);
+        } else {
+          chrome.tabs.query({ active: true }, (allTabs) => {
+            if (allTabs && allTabs.length > 0 && allTabs[0].id !== undefined) {
+              performUpdate(allTabs[0].id);
+            }
+          });
+        }
+      });
     }
   }
 }

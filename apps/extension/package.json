@@ -8,6 +8,18 @@
     "package": "plasmo package --target=firefox-mv2",
     "lint": "tsc --noEmit"
   },
+  "manifest": {
+    "name": "Off-Ramp",
+    "description": "Opal-Style Doomscrolling Interrupter",
+    "permissions": [
+      "tabs",
+      "storage",
+      "<all_urls>"
+    ],
+    "host_permissions": [
+      "<all_urls>"
+    ]
+  },
   "dependencies": {
     "@off-ramp/core": "*",
     "@off-ramp/ui": "*",
