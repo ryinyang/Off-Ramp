@@ -3,6 +3,7 @@ import { InterruptionEngine } from "../src/services/InterruptionEngine.js";
 import { ConfigManager } from "../src/services/ConfigManager.js";
 import { IPlatformMonitor } from "../src/adapters/IPlatformMonitor.js";
 import { IPlatformTrigger } from "../src/adapters/IPlatformTrigger.js";
+import { Target } from "../src/types/config.js";
 
 describe("InterruptionEngine", () => {
   it("triggers focus-switch interruption when time limit is exceeded", async () => {
@@ -76,5 +77,41 @@ describe("InterruptionEngine", () => {
       config.rules[0].interruptionSeconds,
       config.rules[0].message
     );
+  });
+
+  it("immediately tracks screen time when a new target is added to an existing rule dynamically", async () => {
+    const currentDomain: string | null = "instagram.com";
+
+    const mockMonitor: IPlatformMonitor = {
+      getCurrentActivity: vi.fn(async () => currentDomain),
+    };
+
+    const mockTrigger: IPlatformTrigger = {
+      fireInterruption: vi.fn(async () => {}),
+    };
+
+    const engine = new InterruptionEngine(mockMonitor, mockTrigger);
+    const config = ConfigManager.createDefaultConfig();
+
+    // Initially instagram.com is NOT targeted
+    const startTime = new Date("2026-07-27T10:00:00Z");
+    await engine.evaluate(config, startTime);
+    await engine.evaluate(config, new Date(startTime.getTime() + 30000));
+    expect(engine.getTimerService().getAccumulatedSeconds(config.rules[0].id)).toBe(0);
+
+    // Dynamically add instagram.com as a target and assign to rule[0]
+    const newTarget: Target = {
+      id: "target-instagram",
+      name: "Instagram",
+      identifier: "instagram.com",
+      type: "website",
+    };
+    config.targets.push(newTarget);
+    config.rules[0].targetIds.push(newTarget.id);
+
+    // Continue browsing instagram.com -> screen time should now accumulate under rule[0]
+    await engine.evaluate(config, new Date(startTime.getTime() + 30000));
+    await engine.evaluate(config, new Date(startTime.getTime() + 60000));
+    expect(engine.getTimerService().getAccumulatedSeconds(config.rules[0].id)).toBe(30);
   });
 });

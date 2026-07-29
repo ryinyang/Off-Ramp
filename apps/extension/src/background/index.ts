@@ -15,25 +15,31 @@ let currentConfig: UserConfig = ConfigManager.createDefaultConfig();
 
 async function initBackground() {
   console.log("[Off-Ramp] Background Service Worker Initialized");
-  const storedConfigJson = await storage.load("off_ramp_config");
-  if (storedConfigJson) {
-    try {
-      currentConfig = configManager.parseConfig(storedConfigJson);
-      console.log("[Off-Ramp] Loaded saved config from storage");
-    } catch (e) {
-      console.error("[Off-Ramp] Failed to load stored config, using defaults:", e);
-    }
-  } else {
-    console.log("[Off-Ramp] No config found in storage, saving defaults");
-    await storage.save("off_ramp_config", configManager.serializeConfig(currentConfig));
-  }
+  await reloadConfig();
 
   // Set up periodic evaluation timer tick every 3 seconds
   setInterval(runEvaluation, 3000);
 }
 
+async function reloadConfig() {
+  const storedConfigJson = await storage.load("off_ramp_config");
+  if (storedConfigJson) {
+    try {
+      currentConfig = configManager.parseConfig(storedConfigJson);
+    } catch (e) {
+      console.error("[Off-Ramp] Failed to parse config from storage:", e);
+    }
+  } else {
+    console.log("[Off-Ramp] No config found in storage, saving defaults");
+    await storage.save("off_ramp_config", configManager.serializeConfig(currentConfig));
+  }
+}
+
 async function runEvaluation() {
   try {
+    // Always reload latest configuration to pick up dynamic target/rule edits in real time
+    await reloadConfig();
+
     const isPaused = (await storage.load("off_ramp_paused")) === "true";
     if (isPaused) {
       engine.getTimerService().tick(null);
@@ -62,6 +68,31 @@ async function runEvaluation() {
   } catch (err) {
     console.error("[Off-Ramp] Evaluation error:", err);
   }
+}
+
+// Storage Change Listener for Real-Time Config Updates
+if (typeof browser !== "undefined" && browser.storage && browser.storage.onChanged) {
+  browser.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === "local" && changes.off_ramp_config?.newValue) {
+      try {
+        currentConfig = configManager.parseConfig(changes.off_ramp_config.newValue);
+        console.log("[Off-Ramp] Real-time config update received from storage event.");
+      } catch (err) {
+        console.error("[Off-Ramp] Failed to parse updated config from storage event:", err);
+      }
+    }
+  });
+} else if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === "local" && changes.off_ramp_config?.newValue) {
+      try {
+        currentConfig = configManager.parseConfig(changes.off_ramp_config.newValue);
+        console.log("[Off-Ramp] Real-time config update received from storage event.");
+      } catch (err) {
+        console.error("[Off-Ramp] Failed to parse updated config from storage event:", err);
+      }
+    }
+  });
 }
 
 // Event Listeners for Tab Switches and URL Navigation
