@@ -41,6 +41,14 @@ export default function BreakPage() {
 
   return (
     <div style={styles.fullscreenContainer}>
+      <style>{`
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background-color: #0F172A !important;
+          border: none !important;
+        }
+      `}</style>
       <div style={styles.card}>
         <div style={styles.iconCircle}>{isBreakActive ? "⏱️" : "🎉"}</div>
         <h1 style={styles.title}>

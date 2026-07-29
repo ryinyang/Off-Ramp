@@ -107,6 +107,14 @@ export default function Popup() {
 
   return (
     <div style={styles.container}>
+      <style>{`
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background-color: #0F172A !important;
+          border: none !important;
+        }
+      `}</style>
       <header style={styles.header}>
         <div style={styles.titleRow}>
           <h1 style={styles.title}>Off-Ramp</h1>

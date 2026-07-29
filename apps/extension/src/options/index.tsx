@@ -191,6 +191,14 @@ export default function Options() {
 
   return (
     <div style={styles.fullscreenContainer}>
+      <style>{`
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background-color: #0F172A !important;
+          border: none !important;
+        }
+      `}</style>
       <div style={styles.pageCard}>
         {/* Header */}
         <header style={styles.header}>
