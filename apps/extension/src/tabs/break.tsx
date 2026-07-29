@@ -26,36 +26,53 @@ export default function BreakPage() {
 
   useEffect(() => {
     if (timeLeft <= 0) {
-      // Return user or close tab after break ends
-      window.history.back();
+      // Timer finished - DO NOT auto-redirect. Stop timer at 0.
       return;
     }
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft((prev) => Math.max(0, prev - 1));
     }, 1000);
 
     return () => clearInterval(timer);
   }, [timeLeft]);
 
+  const isBreakActive = timeLeft > 0;
+
   return (
     <div style={styles.fullscreenContainer}>
       <div style={styles.card}>
-        <div style={styles.iconCircle}>⏱️</div>
-        <h1 style={styles.title}>Off-Ramp Active</h1>
+        <div style={styles.iconCircle}>{isBreakActive ? "⏱️" : "🎉"}</div>
+        <h1 style={styles.title}>
+          {isBreakActive ? "Off-Ramp Active" : "Break Complete!"}
+        </h1>
         <p style={styles.message}>"{message}"</p>
 
-        <div style={styles.timerCircle}>
+        <div
+          style={{
+            ...styles.timerCircle,
+            borderColor: isBreakActive ? "#6366F1" : "#10B981",
+            backgroundColor: isBreakActive ? "#312E81" : "#065F46",
+          }}>
           <span style={styles.timerNumber}>{timeLeft}</span>
-          <span style={styles.timerLabel}>seconds remaining</span>
+          <span style={styles.timerLabel}>
+            {isBreakActive ? "seconds remaining" : "seconds left"}
+          </span>
         </div>
 
         <p style={styles.subtext}>
-          Take a deep breath. Focus on your real-world priorities.
+          {isBreakActive
+            ? "Take a deep breath. Focus on your real-world priorities."
+            : "Your break time is complete. You may now return to your page or continue your day."}
         </p>
 
-        <button style={styles.buttonClose} onClick={() => window.history.back()}>
-          Return to Previous Page
+        <button
+          style={isBreakActive ? styles.buttonDisabled : styles.buttonEnabled}
+          disabled={isBreakActive}
+          onClick={() => window.history.back()}>
+          {isBreakActive
+            ? `Return Available in ${timeLeft}s`
+            : "End Break & Return"}
         </button>
       </div>
     </div>
@@ -114,9 +131,9 @@ const styles: Record<string, React.CSSProperties> = {
     width: "140px",
     height: "140px",
     borderRadius: "50%",
-    backgroundColor: "#312E81",
     border: "4px solid #6366F1",
     marginBottom: "24px",
+    transition: "all 0.3s ease",
   },
   timerNumber: {
     fontSize: "42px",
@@ -134,16 +151,29 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "14px",
     color: "#94A3B8",
     margin: "0 0 24px 0",
+    lineHeight: "1.5",
   },
-  buttonClose: {
-    backgroundColor: "#4F46E5",
+  buttonEnabled: {
+    backgroundColor: "#10B981",
     color: "#FFFFFF",
     border: "none",
-    padding: "12px 24px",
+    padding: "14px 28px",
+    borderRadius: "8px",
+    fontSize: "15px",
+    fontWeight: "700",
+    cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+    transition: "transform 0.1s ease, background-color 0.2s ease",
+  },
+  buttonDisabled: {
+    backgroundColor: "#334155",
+    color: "#64748B",
+    border: "1px solid #475569",
+    padding: "14px 28px",
     borderRadius: "8px",
     fontSize: "14px",
     fontWeight: "600",
-    cursor: "pointer",
-    transition: "background-color 0.2s ease",
+    cursor: "not-allowed",
+    opacity: 0.7,
   },
 };

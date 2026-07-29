@@ -43,9 +43,12 @@ Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leve
 
 ### 3.3 Break Page UI (`src/tabs/break.tsx`)
 - Full-screen extension break screen displaying countdown timer for $Y$ seconds and custom reflection message.
+- **Strict Break Enforcement**:
+  - The **"Return to Previous Page"** button is **disabled** while the break countdown timer is active ($timeLeft > 0$).
+  - **No Auto-Redirection**: When the countdown timer reaches zero, the page does NOT automatically redirect. Access button becomes enabled (`"End Break & Return"`), requiring explicit user action to return.
 
 ## 4. Deliverables & Verification
 - Plasmo build succeeds for Firefox target.
 - Users can create, edit, toggle, and delete rules via the Options Page.
 - Popup UI displays real-time remaining screen time per target website.
-- Rule updates persist to storage and immediately take effect in the background monitor.
+- Break page disables return button while timer is running and avoids auto-redirection on completion.
