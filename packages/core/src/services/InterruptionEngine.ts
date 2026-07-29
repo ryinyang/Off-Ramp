@@ -3,6 +3,7 @@ import { IPlatformMonitor } from "../adapters/IPlatformMonitor.js";
 import { IPlatformTrigger } from "../adapters/IPlatformTrigger.js";
 import { ScheduleEvaluator } from "./ScheduleEvaluator.js";
 import { TimerService } from "./TimerService.js";
+import { DomainUtils } from "../utils/DomainUtils.js";
 
 export class InterruptionEngine {
   private monitor: IPlatformMonitor;
@@ -36,17 +37,9 @@ export class InterruptionEngine {
       if (nowMs < this.activeBreakUntil) {
         const currentActivity = await this.monitor.getCurrentActivity();
         if (currentActivity) {
-          const currentLower = currentActivity.toLowerCase();
-
-          // Check if current activity matches ANY target in config
-          const isTargeted = config.targets.some((t) => {
-            const targetLower = t.identifier.toLowerCase();
-            return (
-              currentLower === targetLower ||
-              currentLower.endsWith("." + targetLower) ||
-              targetLower.endsWith("." + currentLower)
-            );
-          });
+          const isTargeted = config.targets.some((t) =>
+            DomainUtils.isDomainMatch(currentActivity, t.identifier)
+          );
 
           if (isTargeted) {
             const remainingSeconds = Math.ceil((this.activeBreakUntil - nowMs) / 1000);
@@ -71,17 +64,8 @@ export class InterruptionEngine {
       return false;
     }
 
-    const currentLower = currentActivity.toLowerCase();
-
     // Find all targets matching current activity
-    const matchingTargets = config.targets.filter((t) => {
-      const targetLower = t.identifier.toLowerCase();
-      return (
-        currentLower === targetLower ||
-        currentLower.endsWith("." + targetLower) ||
-        targetLower.endsWith("." + currentLower)
-      );
-    });
+    const matchingTargets = DomainUtils.getMatchingTargets(currentActivity, config.targets);
 
     if (matchingTargets.length === 0) {
       this.timerService.tickRules([], nowMs);

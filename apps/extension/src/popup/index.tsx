@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { ConfigManager, UserConfig } from "@off-ramp/core";
+import { ConfigManager, UserConfig, TimeUtils } from "@off-ramp/core";
 import { ExtensionStorage } from "../adapters/ExtensionStorage";
+import { BrowserApi } from "../utils/BrowserApi";
 
 export default function Popup() {
   const [config, setConfig] = useState<UserConfig | null>(null);
@@ -99,11 +100,7 @@ export default function Popup() {
   };
 
   const handleOpenOptions = () => {
-    if (typeof browser !== "undefined" && browser.runtime && browser.runtime.openOptionsPage) {
-      browser.runtime.openOptionsPage();
-    } else if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.openOptionsPage) {
-      chrome.runtime.openOptionsPage();
-    }
+    BrowserApi.openOptionsPage();
   };
 
   if (!config) {
@@ -146,13 +143,9 @@ export default function Popup() {
         <h2 style={styles.sectionTitle}>Active Rules & Screen Time Remaining</h2>
         <div style={styles.targetList}>
           {config.rules.map((rule) => {
-            const allowedMins = rule.allowedMinutes;
             const accumulatedSecs = accumulators[rule.id] || 0;
-            const usedMins = accumulatedSecs / 60;
-            const remainingMins = Math.max(0, allowedMins - usedMins);
-            const percentUsed = Math.min(100, Math.max(0, (usedMins / allowedMins) * 100));
-
-            const isNearLimit = percentUsed >= 85;
+            const { usedMinutes, remainingMinutes, percentUsed, isNearLimit } =
+              TimeUtils.calculateRuleTime(rule.allowedMinutes, accumulatedSecs);
 
             const assignedTargetNames = config.targets
               .filter((t) => rule.targetIds.includes(t.id))
@@ -181,15 +174,15 @@ export default function Popup() {
                     }>
                     {!isMonitoring
                       ? "PAUSED ⏸️"
-                      : remainingMins === 0
+                      : remainingMinutes === 0
                       ? "BREAK TRIGGERED"
-                      : `${remainingMins.toFixed(1)} mins left`}
+                      : `${remainingMinutes.toFixed(1)} mins left`}
                   </span>
                 </div>
 
                 <div style={styles.progressTextRow}>
                   <span style={styles.progressText}>
-                    Combined Used: <strong>{usedMins.toFixed(1)}</strong> / {allowedMins} mins
+                    Combined Used: <strong>{usedMinutes.toFixed(1)}</strong> / {rule.allowedMinutes} mins
                   </span>
                   <span style={styles.progressPercent}>{percentUsed.toFixed(0)}%</span>
                 </div>

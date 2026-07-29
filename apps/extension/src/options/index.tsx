@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ConfigManager, UserConfig, Rule, Target } from "@off-ramp/core";
+import { ConfigManager, UserConfig, Rule, Target, DomainUtils } from "@off-ramp/core";
 import { ExtensionStorage } from "../adapters/ExtensionStorage";
 
 export default function Options() {
@@ -55,7 +55,7 @@ export default function Options() {
     e.preventDefault();
     if (!config || !newTargetName.trim() || !newTargetDomain.trim()) return;
 
-    const cleanedDomain = newTargetDomain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "");
+    const cleanedDomain = DomainUtils.normalizeDomain(newTargetDomain);
 
     const newTarget: Target = {
       id: `target-${Date.now()}`,
