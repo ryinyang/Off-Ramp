@@ -7,7 +7,7 @@ Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leve
 
 ### 2.1 Storage Adapter (`ExtensionStorage.ts`)
 - Implements `IStorageProvider` using `browser.storage.local` / `chrome.storage.local`.
-- Syncs state changes cleanly with `@off-ramp/core` and notifies background workers live.
+- Syncs state changes cleanly with `@off-ramp/core` and persists active accumulated target screen time.
 
 ### 2.2 Activity Monitor Adapter (`WebTabMonitor.ts`)
 - Implements `IPlatformMonitor`.
@@ -21,7 +21,13 @@ Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leve
 
 ### 3.1 Popup UI (`src/popup/index.tsx`)
 - Quick extension toolbar status popup.
-- Displays monitoring active/paused toggle, active target websites list, rule summaries, and a **"Settings & Rule Configurator ⚙️"** button opening the options page (`chrome.runtime.openOptionsPage()`).
+- **Monitoring Status Badge**: Shows ACTIVE / PAUSED status with toggle control.
+- **Real-Time Target Screen Time & Remaining Time Cards**:
+  - Displays each monitored website target (e.g., `reddit.com`, `youtube.com`).
+  - Displays real-time accumulated screen time and remaining time until interruption (e.g. `1.2 / 15.0 mins` | `13.8 mins remaining`).
+  - Highlights active target domain when user is currently browsing it.
+- **Rule Summary List**: Displays active rules and break durations.
+- **Settings Navigation**: **"Settings & Rule Configurator ⚙️"** button launching the options page (`chrome.runtime.openOptionsPage()`).
 
 ### 3.2 Options / Settings Page UI (`src/options/index.tsx`)
 - Full-page extension settings UI for complete Rule Management:
@@ -41,4 +47,5 @@ Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leve
 ## 4. Deliverables & Verification
 - Plasmo build succeeds for Firefox target.
 - Users can create, edit, toggle, and delete rules via the Options Page.
+- Popup UI displays real-time remaining screen time per target website.
 - Rule updates persist to storage and immediately take effect in the background monitor.

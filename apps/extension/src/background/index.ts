@@ -40,6 +40,9 @@ async function runEvaluation() {
   try {
     const currentActivity = await monitor.getCurrentActivity();
     const evaluated = await engine.evaluate(currentConfig);
+    const accumulators = engine.getTimerService().getAllAccumulators();
+    await storage.save("off_ramp_accumulators", JSON.stringify(accumulators));
+
     const accumulated = currentActivity
       ? engine.getTimerService().getAccumulatedSeconds(currentActivity)
       : 0;

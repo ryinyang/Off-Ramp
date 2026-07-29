@@ -32,6 +32,17 @@ export class TimerService {
   }
 
   /**
+   * Returns a plain record object of all accumulated target seconds.
+   */
+  public getAllAccumulators(): Record<string, number> {
+    const result: Record<string, number> = {};
+    for (const [key, value] of this.accumulators.entries()) {
+      result[key] = value;
+    }
+    return result;
+  }
+
+  /**
    * Resets accumulated screen time for a target identifier to zero.
    */
   public resetAccumulator(identifier: string): void {

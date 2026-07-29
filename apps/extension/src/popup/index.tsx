@@ -4,17 +4,25 @@ import { ExtensionStorage } from "../adapters/ExtensionStorage";
 
 export default function Popup() {
   const [config, setConfig] = useState<UserConfig | null>(null);
+  const [accumulators, setAccumulators] = useState<Record<string, number>>({});
   const [isMonitoring, setIsMonitoring] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
 
   const configManager = new ConfigManager();
+  const storage = new ExtensionStorage();
 
   useEffect(() => {
     document.title = "Off-Ramp Toolbar Popup";
     loadConfig();
-  }, []);
+    loadAccumulators();
 
-  const storage = new ExtensionStorage();
+    // Auto-refresh accumulators every 1 second while popup is open
+    const interval = setInterval(() => {
+      loadAccumulators();
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const loadConfig = async () => {
     const storedJson = await storage.load("off_ramp_config");
@@ -27,9 +35,19 @@ export default function Popup() {
         console.error("Config parse failed:", e);
       }
     }
-    // Default fallback
     const defaultConfig = ConfigManager.createDefaultConfig();
     setConfig(defaultConfig);
+  };
+
+  const loadAccumulators = async () => {
+    const json = await storage.load("off_ramp_accumulators");
+    if (json) {
+      try {
+        setAccumulators(JSON.parse(json));
+      } catch {
+        // Ignore JSON parse error
+      }
+    }
   };
 
   const saveConfig = async (newConfig: UserConfig) => {
@@ -71,14 +89,6 @@ export default function Popup() {
     reader.readAsText(file);
   };
 
-  if (!config) {
-    return (
-      <div style={styles.container}>
-        <p style={{ color: "#94A3B8" }}>Loading Off-Ramp...</p>
-      </div>
-    );
-  }
-
   const handleOpenOptions = () => {
     if (typeof browser !== "undefined" && browser.runtime && browser.runtime.openOptionsPage) {
       browser.runtime.openOptionsPage();
@@ -86,6 +96,14 @@ export default function Popup() {
       chrome.runtime.openOptionsPage();
     }
   };
+
+  if (!config) {
+    return (
+      <div style={styles.container}>
+        <p style={{ color: "#94A3B8" }}>Loading Off-Ramp...</p>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -106,17 +124,61 @@ export default function Popup() {
 
       {statusMessage && <div style={styles.alertMessage}>{statusMessage}</div>}
 
+      {/* Real-time Target Screen Time & Remaining Time Cards */}
       <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Monitored Websites</h2>
+        <h2 style={styles.sectionTitle}>Monitored Websites & Time Remaining</h2>
         <div style={styles.targetList}>
           {config.targets
             .filter((t) => t.type === "website")
-            .map((target) => (
-              <div key={target.id} style={styles.targetCard}>
-                <span style={styles.targetName}>{target.name}</span>
-                <span style={styles.targetDomain}>{target.identifier}</span>
-              </div>
-            ))}
+            .map((target) => {
+              // Find rule applying to this target
+              const matchingRule = config.rules.find(
+                (r) => r.enabled && r.targetIds.includes(target.id)
+              );
+
+              const allowedMins = matchingRule ? matchingRule.allowedMinutes : 15;
+              const accumulatedSecs = accumulators[target.identifier] || 0;
+              const usedMins = accumulatedSecs / 60;
+              const remainingMins = Math.max(0, allowedMins - usedMins);
+              const percentUsed = Math.min(100, Math.max(0, (usedMins / allowedMins) * 100));
+
+              const isNearLimit = percentUsed >= 85;
+
+              return (
+                <div key={target.id} style={styles.targetCardDetailed}>
+                  <div style={styles.targetCardHeader}>
+                    <div>
+                      <span style={styles.targetName}>{target.name}</span>
+                      <span style={styles.targetDomain}>{target.identifier}</span>
+                    </div>
+
+                    <span style={isNearLimit ? styles.badgeLimitNear : styles.badgeRemaining}>
+                      {remainingMins === 0
+                        ? "BREAK TRIGGERED"
+                        : `${remainingMins.toFixed(1)} mins left`}
+                    </span>
+                  </div>
+
+                  <div style={styles.progressTextRow}>
+                    <span style={styles.progressText}>
+                      Used: <strong>{usedMins.toFixed(1)}</strong> / {allowedMins} mins
+                    </span>
+                    <span style={styles.progressPercent}>{percentUsed.toFixed(0)}%</span>
+                  </div>
+
+                  {/* Visual Progress Bar */}
+                  <div style={styles.progressBarTrack}>
+                    <div
+                      style={{
+                        ...styles.progressBarFill,
+                        width: `${percentUsed}%`,
+                        backgroundColor: isNearLimit ? "#EF4444" : "#6366F1",
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </div>
 
@@ -244,25 +306,73 @@ const styles: Record<string, React.CSSProperties> = {
   targetList: {
     display: "flex",
     flexDirection: "column",
-    gap: "6px",
+    gap: "10px",
   },
-  targetCard: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+  targetCardDetailed: {
     backgroundColor: "#1E293B",
-    padding: "8px 12px",
-    borderRadius: "8px",
+    padding: "12px",
+    borderRadius: "10px",
     border: "1px solid #334155",
   },
+  targetCardHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: "8px",
+  },
   targetName: {
+    display: "block",
     fontSize: "14px",
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#F8FAFC",
   },
   targetDomain: {
-    fontSize: "12px",
+    display: "block",
+    fontSize: "11px",
     color: "#818CF8",
+    marginTop: "1px",
+  },
+  badgeRemaining: {
+    backgroundColor: "#312E81",
+    color: "#C7D2FE",
+    padding: "3px 8px",
+    borderRadius: "10px",
+    fontSize: "11px",
+    fontWeight: "600",
+  },
+  badgeLimitNear: {
+    backgroundColor: "#7F1D1D",
+    color: "#F87171",
+    padding: "3px 8px",
+    borderRadius: "10px",
+    fontSize: "11px",
+    fontWeight: "700",
+  },
+  progressTextRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: "12px",
+    color: "#94A3B8",
+    marginBottom: "6px",
+  },
+  progressText: {
+    color: "#CBD5E1",
+  },
+  progressPercent: {
+    fontWeight: "700",
+    color: "#F8FAFC",
+  },
+  progressBarTrack: {
+    height: "6px",
+    width: "100%",
+    backgroundColor: "#0F172A",
+    borderRadius: "3px",
+    overflow: "hidden",
+  },
+  progressBarFill: {
+    height: "100%",
+    borderRadius: "3px",
+    transition: "width 0.3s ease, background-color 0.3s ease",
   },
   ruleCard: {
     backgroundColor: "#1E293B",
