@@ -78,6 +78,14 @@ export default function Popup() {
     );
   }
 
+  const handleOpenOptions = () => {
+    if (typeof browser !== "undefined" && browser.runtime && browser.runtime.openOptionsPage) {
+      browser.runtime.openOptionsPage();
+    } else if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.openOptionsPage) {
+      chrome.runtime.openOptionsPage();
+    }
+  };
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -87,7 +95,12 @@ export default function Popup() {
             {isMonitoring ? "ACTIVE" : "PAUSED"}
           </span>
         </div>
-        <p style={styles.subtitle}>Opal-Style Focus Switcher</p>
+        <div style={styles.subHeaderRow}>
+          <p style={styles.subtitle}>Opal-Style Focus Switcher</p>
+          <button style={styles.buttonSettings} onClick={handleOpenOptions}>
+            ⚙️ Settings & Rules
+          </button>
+        </div>
       </header>
 
       {statusMessage && <div style={styles.alertMessage}>{statusMessage}</div>}
@@ -172,6 +185,22 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#94A3B8",
     marginTop: "4px",
     marginBottom: 0,
+  },
+  subHeaderRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: "4px",
+  },
+  buttonSettings: {
+    backgroundColor: "#334155",
+    color: "#F8FAFC",
+    border: "none",
+    padding: "4px 8px",
+    borderRadius: "6px",
+    fontSize: "11px",
+    fontWeight: "600",
+    cursor: "pointer",
   },
   badgeActive: {
     backgroundColor: "#065F46",
