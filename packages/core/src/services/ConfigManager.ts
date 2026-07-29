@@ -34,7 +34,7 @@ export class ConfigManager {
       rules: [
         {
           id: "rule-default",
-          allowedMinutes: 15,
+          allowedMinutes: 1,
           interruptionSeconds: 30,
           message: "Hey! Time to take a break and give yourself an off-ramp.",
           targetIds: ["target-tiktok", "target-reddit"],
