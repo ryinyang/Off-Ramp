@@ -23,3 +23,8 @@
 - **Validate Everything**: Never declare success until build, lint, or test commands confirm clean execution.
 - **Acknowledge Failures**: Explicitly handle and resolve command/build failures rather than glossing over them.
 - **Safe Operations**: Avoid destructive actions (e.g. deleting data or force pushes) without explicit permission.
+
+## 5. Monorepo & Extension Conventions
+
+- **Monorepo Path Mapping**: In Plasmo extension apps (`apps/extension`), do not map workspace packages directly to `.ts` source files in `tsconfig.json` paths if it bypasses pre-compiled CJS/ESM exports. Map `@off-ramp/*` to `dist/index.d.ts` in `tsconfig.base.json` for IDE typechecking.
+- **Real-Time Storage Sync**: Extension background workers must subscribe to `storage.onChanged`, reload config on evaluation ticks, hydrate accumulators on startup, and clear active breaks when rule limits increase.
