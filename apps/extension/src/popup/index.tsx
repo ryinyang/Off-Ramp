@@ -129,7 +129,7 @@ export default function Popup() {
           </span>
         </div>
         <div style={styles.subHeaderRow}>
-          <p style={styles.subtitle}>Opal-Style Focus Switcher</p>
+          <p style={styles.subtitle}>Doomscrolling Interrupter & Focus Switcher</p>
           <button style={styles.buttonSettings} onClick={handleOpenOptions}>
             ⚙️ Settings & Rules
           </button>

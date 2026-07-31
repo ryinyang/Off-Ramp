@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Establish the Turborepo workspace infrastructure, universal domain types, core business logic services, adapter interfaces, versioned schema validation, and shared state management supporting Opal-style Focus-Switch interception across all platforms.
+Establish the Turborepo workspace infrastructure, universal domain types, core business logic services, adapter interfaces, versioned schema validation, and shared state management supporting Focus-Switch interception across all platforms.
 
 ## 2. Workspaces & Structure
 

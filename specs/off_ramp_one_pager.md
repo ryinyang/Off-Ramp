@@ -2,7 +2,7 @@
 
 ## Overview
 
-Off-Ramp is a cross-platform app designed to interrupt doom scrolling by forcibly pulling screen focus away from distracting applications and websites (matching the core behavior of Opal).
+Off-Ramp is a cross-platform app designed to interrupt doom scrolling by forcibly pulling screen focus away from distracting applications and websites.
 
 Instead of relying on easy-to-ignore floating overlays or full nuclear app blockers, Off-Ramp monitors screen time against user-defined limits. When a limit is reached, Off-Ramp intercepts the restricted application or website, blocks entry via native system shields or tab redirects, and forcibly redirects the user to the Off-Ramp break screen or Home Screen.
 
@@ -88,7 +88,7 @@ Instead of relying on easy-to-ignore floating overlays or full nuclear app block
 
 - Method: `fireInterruption(duration: number, message: string): void`
 - Implementations:
-  - `AndroidFocusSwitchTrigger`: Uses `AccessibilityService` to fire a forced `startActivity()` launch intent targeting Off-Ramp's break screen (Opal-style).
+  - `AndroidFocusSwitchTrigger`: Uses `AccessibilityService` to fire a forced `startActivity()` launch intent targeting Off-Ramp's break screen.
   - `IOSShieldTrigger`: Configures native SwiftUI `ShieldConfigurationExtension` to shield target app and execute `.close` to return user to Home Screen / Off-Ramp.
   - `WebTabRedirectTrigger`: Uses `browser.tabs.update()` to redirect active restricted tab to internal extension break page.
 

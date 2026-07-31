@@ -4,7 +4,7 @@
 
 This document outlines technical research, feasibility constraints, risk mitigation strategies, and system designs for **Off-Ramp** across browser extensions (Firefox/Chrome MV3 & MV2) and mobile platforms (Android & iOS).
 
-Off-Ramp operates strictly in **Focus-Switch Mode (Opal-Style)**: Using native OS capabilities to forcibly pull screen focus away from restricted apps/sites and return focus to Off-Ramp or the Home Screen.
+Off-Ramp operates strictly in **Forced Focus-Switch Mode**: Using native OS capabilities to forcibly pull screen focus away from restricted apps/sites and return focus to Off-Ramp or the Home Screen.
 
 ---
 
@@ -21,7 +21,7 @@ Off-Ramp operates strictly in **Focus-Switch Mode (Opal-Style)**: Using native O
 
 ---
 
-## 3. Platform Architecture Diagram (Opal-Style Focus Switch)
+## 3. Platform Architecture Diagram (Forced Focus Switch)
 
 ```
 +-----------------------------------------------------------------------------------------------------+

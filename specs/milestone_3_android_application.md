@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Develop mobile apps for Android and iOS using React Native, Expo, NativeWind, featuring Opal-style Focus-Switching (Android `AccessibilityService` launch intents + iOS Native `ManagedSettingsStore` Shields).
+Develop mobile apps for Android and iOS using React Native, Expo, NativeWind, featuring forced Focus-Switching (Android `AccessibilityService` launch intents + iOS Native `ManagedSettingsStore` Shields).
 
 ## 2. Architecture & Adapters (`apps/mobile`)
 

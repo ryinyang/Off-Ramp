@@ -10,7 +10,7 @@
   },
   "manifest": {
     "name": "Off-Ramp",
-    "description": "Opal-Style Doomscrolling Interrupter",
+    "description": "Cross-Platform Doomscrolling Interrupter & Focus Switch",
     "permissions": [
       "tabs",
       "storage",

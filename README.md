@@ -2,7 +2,7 @@
 
 **Off-Ramp** is an open-source, cross-platform app designed to interrupt doom scrolling.
 
-Unlike traditional anti-procrastination apps that hard-block apps or rely on floating overlays, Off-Ramp uses an **Opal-style focus switch**: when your screen time limit is reached on a monitored app or website, Off-Ramp forcibly intercepts entry, shields the app/site, and pulls your focus directly to a mindful break screen.
+Instead of using easy-to-dismiss floating popups or completely blocking your apps, Off-Ramp enforces a **forced focus switch**: whenever you reach your screen time limit on a monitored website or application, Off-Ramp automatically intercepts your navigation and redirects your focus directly to a dedicated, mindful break screen with a countdown reflection timer. This creates an intentional friction point that helps you break the habit loop and step away.
 
 ---
 
@@ -27,7 +27,7 @@ The brain of Off-Ramp lives in `packages/core` with zero platform or UI dependen
 - **Domain Schemas (`src/types/config.ts`)**: Zod-validated data models for `Target`, `Schedule`, `Rule`, and versioned `UserConfig`.
 - **Strategy Contracts (`src/adapters/`)**:
   - `IPlatformMonitor`: Interface for querying current active application/website.
-  - `IPlatformTrigger`: Interface for executing Opal-style focus-switch interruptions.
+  - `IPlatformTrigger`: Interface for executing focus-switch break interruptions.
   - `IStorageProvider`: Interface for local state persistence.
 - **Core Services (`src/services/`)**:
   - `TimerService`: Tracks screen time at the **Rule Level** (`rule.id`) using event-driven timestamp diffing.
@@ -74,7 +74,7 @@ npm install
 # Build all monorepo packages
 npm run build
 
-# Run unit tests across core logic (21/21 tests passing across 8 suites)
+# Run unit tests across core logic (26/26 tests passing across 8 suites)
 npm run test
 ```
 

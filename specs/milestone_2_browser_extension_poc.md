@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leveraging event-driven background tab monitoring, break-page tab focus redirection (Opal-style), real-time storage configuration sync, and a full Rule Management Settings Page.
+Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leveraging event-driven background tab monitoring, break-page tab focus redirection, real-time storage configuration sync, and a full Rule Management Settings Page.
 
 ## 2. Architecture & Adapters (`apps/extension`)
 

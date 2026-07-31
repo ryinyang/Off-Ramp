@@ -1,6 +1,6 @@
 export interface IPlatformTrigger {
   /**
-   * Fires the Opal-style focus-switch interruption.
+   * Fires the forced focus-switch break interruption.
    * Forcibly shields or redirects focus off the target application/website for durationSeconds.
    */
   fireInterruption(durationSeconds: number, message: string): Promise<void>;
