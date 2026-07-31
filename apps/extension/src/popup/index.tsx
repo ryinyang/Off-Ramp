@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { ConfigManager, UserConfig, TimeUtils } from "@off-ramp/core";
+import { ConfigManager, UserConfig, TimeUtils, ScheduleEvaluator } from "@off-ramp/core";
 import { ExtensionStorage } from "../adapters/ExtensionStorage";
 import { BrowserApi } from "../utils/BrowserApi";
+
+const REQUIRED_PHRASE = "I am choosing to pause Off-Ramp";
 
 export default function Popup() {
   const [config, setConfig] = useState<UserConfig | null>(null);
   const [accumulators, setAccumulators] = useState<Record<string, number>>({});
   const [isMonitoring, setIsMonitoring] = useState(true);
+  const [pausedUntilStr, setPausedUntilStr] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
+
+  // Mindful Pause Modal state
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const [typedPhrase, setTypedPhrase] = useState("");
 
   const configManager = new ConfigManager();
   const storage = new ExtensionStorage();
@@ -20,6 +27,7 @@ export default function Popup() {
     // Auto-refresh accumulators every 1 second while popup is open
     const interval = setInterval(() => {
       loadAccumulators();
+      loadConfig();
     }, 1000);
 
     return () => clearInterval(interval);
@@ -27,7 +35,10 @@ export default function Popup() {
 
   const loadConfig = async () => {
     const pausedVal = await storage.load("off_ramp_paused");
+    const untilVal = await storage.load("off_ramp_paused_until");
+
     setIsMonitoring(pausedVal !== "true");
+    setPausedUntilStr(untilVal || null);
 
     const storedJson = await storage.load("off_ramp_config");
     if (storedJson) {
@@ -43,11 +54,70 @@ export default function Popup() {
     setConfig(defaultConfig);
   };
 
-  const handleTogglePause = async () => {
-    const nextMonitoringState = !isMonitoring;
-    setIsMonitoring(nextMonitoringState);
-    await storage.save("off_ramp_paused", nextMonitoringState ? "false" : "true");
-    setStatusMessage(nextMonitoringState ? "Off-Ramp enabled!" : "Off-Ramp paused!");
+  const getSessionEndInfo = (): { endMs: number; timeStr: string } => {
+    const now = new Date();
+    let latestEndMs = 0;
+    let timeStr = "23:59";
+
+    if (config && config.schedules) {
+      const evaluator = new ScheduleEvaluator();
+      for (const schedule of config.schedules) {
+        if (evaluator.isMonitoringActive(schedule, now)) {
+          const [endHour, endMin] = schedule.endTime.split(":").map(Number);
+          const endDate = new Date(now);
+          endDate.setHours(endHour, endMin, 0, 0);
+          const endMs = endDate.getTime();
+          if (endMs > latestEndMs) {
+            latestEndMs = endMs;
+            timeStr = schedule.endTime;
+          }
+        }
+      }
+    }
+
+    if (latestEndMs === 0) {
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+      latestEndMs = endOfDay.getTime();
+      timeStr = "23:59";
+    }
+
+    return { endMs: latestEndMs, timeStr };
+  };
+
+  const handleInitiatePause = () => {
+    if (!isMonitoring) {
+      // Already paused -> Resume instantly
+      handleUnpause();
+    } else {
+      // Currently active -> Open Mindful Pause modal requiring typed phrase
+      setTypedPhrase("");
+      setShowPauseModal(true);
+    }
+  };
+
+  const handleConfirmPause = async () => {
+    if (typedPhrase.trim() !== REQUIRED_PHRASE) return;
+
+    const { endMs } = getSessionEndInfo();
+    setIsMonitoring(false);
+    setShowPauseModal(false);
+
+    await storage.save("off_ramp_paused", "true");
+    await storage.save("off_ramp_paused_until", String(endMs));
+
+    setStatusMessage("Off-Ramp paused until end of session!");
+    setTimeout(() => setStatusMessage(""), 3000);
+  };
+
+  const handleUnpause = async () => {
+    setIsMonitoring(true);
+    setPausedUntilStr(null);
+
+    await storage.save("off_ramp_paused", "false");
+    await storage.save("off_ramp_paused_until", "");
+
+    setStatusMessage("Off-Ramp monitoring resumed! 🛡️");
     setTimeout(() => setStatusMessage(""), 2500);
   };
 
@@ -111,6 +181,9 @@ export default function Popup() {
     );
   }
 
+  const { timeStr: activeSessionEndStr } = getSessionEndInfo();
+  const isPhraseMatched = typedPhrase.trim() === REQUIRED_PHRASE;
+
   return (
     <div style={styles.container}>
       <style>{`
@@ -169,22 +242,20 @@ export default function Popup() {
                       !isMonitoring
                         ? styles.badgePaused
                         : isNearLimit
-                          ? styles.badgeLimitNear
-                          : styles.badgeRemaining
-                    }
-                  >
+                        ? styles.badgeLimitNear
+                        : styles.badgeRemaining
+                    }>
                     {!isMonitoring
                       ? "PAUSED ⏸️"
                       : remainingMinutes === 0
-                        ? "BREAK TRIGGERED"
-                        : `${remainingMinutes.toFixed(1)} mins left`}
+                      ? "BREAK TRIGGERED"
+                      : `${remainingMinutes.toFixed(1)} mins left`}
                   </span>
                 </div>
 
                 <div style={styles.progressTextRow}>
                   <span style={styles.progressText}>
-                    Combined Used: <strong>{usedMinutes.toFixed(1)}</strong> / {rule.allowedMinutes}{" "}
-                    mins
+                    Combined Used: <strong>{usedMinutes.toFixed(1)}</strong> / {rule.allowedMinutes} mins
                   </span>
                   <span style={styles.progressPercent}>{percentUsed.toFixed(0)}%</span>
                 </div>
@@ -198,8 +269,8 @@ export default function Popup() {
                       backgroundColor: !isMonitoring
                         ? "#64748B"
                         : isNearLimit
-                          ? "#EF4444"
-                          : "#6366F1",
+                        ? "#EF4444"
+                        : "#6366F1",
                     }}
                   />
                 </div>
@@ -211,20 +282,67 @@ export default function Popup() {
 
       <div style={styles.actionRow}>
         <button
-          style={isMonitoring ? styles.buttonPause : styles.buttonActivate}
-          onClick={handleTogglePause}
-        >
-          {isMonitoring ? "Pause Off-Ramp" : "Enable Off-Ramp"}
+          style={isMonitoring ? styles.buttonPauseFriction : styles.buttonResumeActive}
+          onClick={handleInitiatePause}>
+          {isMonitoring ? "Pause Off-Ramp (Requires Reflection)" : "Resume Monitoring Now 🛡️"}
         </button>
+      </div>
 
-        <button style={styles.buttonSecondary} onClick={handleExport}>
+      <div style={styles.clipboardRow}>
+        <button style={styles.buttonClipboard} onClick={handleExport}>
           📋 Copy Config
         </button>
-
-        <button style={styles.buttonSecondary} onClick={handleImport}>
+        <button style={styles.buttonClipboard} onClick={handleImport}>
           📥 Paste Config
         </button>
       </div>
+
+      {/* Mindful Pause Modal Overlay */}
+      {showPauseModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <h3 style={styles.modalTitle}>Mindful Pause Request ⏸️</h3>
+            <p style={styles.modalDescription}>
+              Pausing Off-Ramp requires intentional friction to prevent impulse doomscrolling.
+            </p>
+            <p style={styles.modalSessionInfo}>
+              Pause will stay active until the end of this session (<strong>{activeSessionEndStr}</strong>).
+            </p>
+
+            <div style={styles.phrasePromptBox}>
+              <span style={styles.phraseLabel}>Type the phrase below to unlock pause:</span>
+              <span style={styles.phraseRequired}>"{REQUIRED_PHRASE}"</span>
+            </div>
+
+            <input
+              type="text"
+              style={styles.modalInput}
+              placeholder={`Type "${REQUIRED_PHRASE}"`}
+              value={typedPhrase}
+              onChange={(e) => setTypedPhrase(e.target.value)}
+              autoFocus
+            />
+
+            <div style={styles.modalButtonRow}>
+              <button
+                style={styles.modalButtonCancel}
+                onClick={() => setShowPauseModal(false)}>
+                Cancel
+              </button>
+              <button
+                style={
+                  isPhraseMatched
+                    ? styles.modalButtonConfirmActive
+                    : styles.modalButtonConfirmDisabled
+                }
+                disabled={!isPhraseMatched}
+                onClick={handleConfirmPause}>
+                Confirm Pause
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -232,14 +350,16 @@ export default function Popup() {
 const styles: Record<string, React.CSSProperties> = {
   container: {
     width: "360px",
-    padding: "20px",
+    padding: "16px",
     backgroundColor: "#0F172A",
     color: "#F8FAFC",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    boxSizing: "border-box",
+    position: "relative",
   },
   header: {
     marginBottom: "16px",
-    borderBottom: "1px solid #334155",
+    borderBottom: "1px solid #1E293B",
     paddingBottom: "12px",
   },
   titleRow: {
@@ -249,79 +369,77 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     fontSize: "20px",
-    fontWeight: "700",
-    color: "#818CF8",
+    fontWeight: "bold",
     margin: 0,
-  },
-  subtitle: {
-    fontSize: "12px",
-    color: "#94A3B8",
-    marginTop: "4px",
-    marginBottom: 0,
+    color: "#6366F1",
   },
   subHeaderRow: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: "4px",
+    marginTop: "6px",
+  },
+  subtitle: {
+    fontSize: "12px",
+    color: "#94A3B8",
+    margin: 0,
   },
   buttonSettings: {
-    backgroundColor: "#334155",
-    color: "#F8FAFC",
-    border: "none",
+    backgroundColor: "#1E293B",
+    color: "#E2E8F0",
+    border: "1px solid #334155",
     padding: "4px 8px",
     borderRadius: "6px",
     fontSize: "11px",
-    fontWeight: "600",
     cursor: "pointer",
+    fontWeight: 600,
   },
   badgeActive: {
-    backgroundColor: "#065F46",
-    color: "#34D399",
-    padding: "4px 8px",
-    borderRadius: "12px",
+    backgroundColor: "#10B981",
+    color: "#064E3B",
     fontSize: "10px",
-    fontWeight: "700",
-    letterSpacing: "0.5px",
+    fontWeight: "bold",
+    padding: "2px 8px",
+    borderRadius: "12px",
   },
   badgeInactive: {
-    backgroundColor: "#7F1D1D",
-    color: "#F87171",
-    padding: "4px 8px",
-    borderRadius: "12px",
+    backgroundColor: "#EF4444",
+    color: "#7F1D1D",
     fontSize: "10px",
-    fontWeight: "700",
-    letterSpacing: "0.5px",
+    fontWeight: "bold",
+    padding: "2px 8px",
+    borderRadius: "12px",
   },
   alertMessage: {
-    backgroundColor: "#312E81",
-    color: "#C7D2FE",
+    backgroundColor: "#1E1B4B",
+    color: "#818CF8",
+    border: "1px solid #3730A3",
     padding: "8px 12px",
-    borderRadius: "6px",
+    borderRadius: "8px",
     fontSize: "12px",
-    marginBottom: "14px",
+    marginBottom: "12px",
     textAlign: "center",
   },
   section: {
     marginBottom: "16px",
   },
   sectionTitle: {
-    fontSize: "12px",
+    fontSize: "13px",
     fontWeight: "600",
-    color: "#94A3B8",
+    color: "#CBD5E1",
+    marginBottom: "8px",
     textTransform: "uppercase",
     letterSpacing: "0.5px",
-    marginBottom: "8px",
   },
   targetList: {
     display: "flex",
     flexDirection: "column",
-    gap: "10px",
+    gap: "8px",
   },
   targetCardDetailed: {
     backgroundColor: "#1E293B",
-    padding: "12px",
-    borderRadius: "10px",
+    padding: "10px 12px",
+    borderRadius: "8px",
     border: "1px solid #334155",
   },
   targetCardHeader: {
@@ -332,57 +450,55 @@ const styles: Record<string, React.CSSProperties> = {
   },
   targetName: {
     display: "block",
-    fontSize: "14px",
-    fontWeight: "700",
+    fontWeight: "bold",
+    fontSize: "13px",
     color: "#F8FAFC",
   },
   targetDomain: {
     display: "block",
     fontSize: "11px",
-    color: "#818CF8",
-    marginTop: "1px",
+    color: "#94A3B8",
   },
   badgeRemaining: {
     backgroundColor: "#312E81",
-    color: "#C7D2FE",
-    padding: "3px 8px",
-    borderRadius: "10px",
+    color: "#A5B4FC",
     fontSize: "11px",
-    fontWeight: "600",
+    fontWeight: "bold",
+    padding: "2px 6px",
+    borderRadius: "4px",
   },
   badgeLimitNear: {
     backgroundColor: "#7F1D1D",
-    color: "#F87171",
-    padding: "3px 8px",
-    borderRadius: "10px",
+    color: "#FCA5A5",
     fontSize: "11px",
-    fontWeight: "700",
+    fontWeight: "bold",
+    padding: "2px 6px",
+    borderRadius: "4px",
   },
   badgePaused: {
     backgroundColor: "#334155",
     color: "#94A3B8",
-    padding: "3px 8px",
-    borderRadius: "10px",
     fontSize: "11px",
-    fontWeight: "600",
+    fontWeight: "bold",
+    padding: "2px 6px",
+    borderRadius: "4px",
   },
   progressTextRow: {
     display: "flex",
     justifyContent: "space-between",
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#94A3B8",
-    marginBottom: "6px",
+    marginBottom: "4px",
   },
   progressText: {
     color: "#CBD5E1",
   },
   progressPercent: {
-    fontWeight: "700",
-    color: "#F8FAFC",
+    fontWeight: "bold",
+    color: "#818CF8",
   },
   progressBarTrack: {
     height: "6px",
-    width: "100%",
     backgroundColor: "#0F172A",
     borderRadius: "3px",
     overflow: "hidden",
@@ -390,75 +506,151 @@ const styles: Record<string, React.CSSProperties> = {
   progressBarFill: {
     height: "100%",
     borderRadius: "3px",
-    transition: "width 0.3s ease, background-color 0.3s ease",
-  },
-  ruleCard: {
-    backgroundColor: "#1E293B",
-    padding: "10px 12px",
-    borderRadius: "8px",
-    border: "1px solid #334155",
-  },
-  ruleText: {
-    fontSize: "13px",
-    color: "#F8FAFC",
-    margin: 0,
-  },
-  ruleMessage: {
-    fontSize: "12px",
-    color: "#94A3B8",
-    fontStyle: "italic",
-    marginTop: "4px",
-    marginBottom: 0,
+    transition: "width 0.3s ease",
   },
   actionRow: {
+    marginBottom: "12px",
+  },
+  buttonPauseFriction: {
+    width: "100%",
+    padding: "10px",
+    backgroundColor: "#475569",
+    color: "#F8FAFC",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "13px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "background-color 0.2s",
+  },
+  buttonResumeActive: {
+    width: "100%",
+    padding: "10px",
+    backgroundColor: "#10B981",
+    color: "#064E3B",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "13px",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+  clipboardRow: {
     display: "flex",
     gap: "8px",
-    marginTop: "20px",
-    flexWrap: "wrap",
   },
-  buttonActivate: {
-    flex: "1 1 100%",
-    backgroundColor: "#4F46E5",
-    color: "#FFFFFF",
-    border: "none",
-    padding: "10px",
-    borderRadius: "8px",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  buttonPause: {
-    flex: "1 1 100%",
-    backgroundColor: "#DC2626",
-    color: "#FFFFFF",
-    border: "none",
-    padding: "10px",
-    borderRadius: "8px",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  buttonSecondary: {
-    flex: "1",
-    backgroundColor: "#334155",
-    color: "#F8FAFC",
-    border: "none",
+  buttonClipboard: {
+    flex: 1,
     padding: "8px",
+    backgroundColor: "#1E293B",
+    color: "#94A3B8",
+    border: "1px solid #334155",
     borderRadius: "6px",
     fontSize: "12px",
-    fontWeight: "600",
     cursor: "pointer",
-    textAlign: "center",
   },
-  buttonSecondaryLabel: {
-    flex: "1",
-    backgroundColor: "#334155",
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.95)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+    padding: "16px",
+  },
+  modalContent: {
+    backgroundColor: "#1E293B",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+    padding: "16px",
+    width: "100%",
+    boxSizing: "border-box",
+  },
+  modalTitle: {
+    fontSize: "16px",
+    fontWeight: "bold",
     color: "#F8FAFC",
+    margin: "0 0 6px 0",
+  },
+  modalDescription: {
+    fontSize: "12px",
+    color: "#94A3B8",
+    margin: "0 0 8px 0",
+    lineHeight: "1.4",
+  },
+  modalSessionInfo: {
+    fontSize: "12px",
+    color: "#818CF8",
+    margin: "0 0 12px 0",
+  },
+  phrasePromptBox: {
+    backgroundColor: "#0F172A",
+    padding: "10px",
+    borderRadius: "6px",
+    border: "1px solid #334155",
+    marginBottom: "10px",
+  },
+  phraseLabel: {
+    display: "block",
+    fontSize: "11px",
+    color: "#94A3B8",
+    marginBottom: "4px",
+  },
+  phraseRequired: {
+    display: "block",
+    fontSize: "12px",
+    fontWeight: "bold",
+    color: "#F43F5E",
+    fontFamily: "monospace",
+  },
+  modalInput: {
+    width: "100%",
+    padding: "8px 10px",
+    backgroundColor: "#0F172A",
+    border: "1px solid #475569",
+    borderRadius: "6px",
+    color: "#F8FAFC",
+    fontSize: "12px",
+    marginBottom: "14px",
+    boxSizing: "border-box",
+    outline: "none",
+  },
+  modalButtonRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "8px",
+  },
+  modalButtonCancel: {
+    padding: "8px 12px",
+    backgroundColor: "#334155",
+    color: "#E2E8F0",
     border: "none",
-    padding: "8px",
     borderRadius: "6px",
     fontSize: "12px",
-    fontWeight: "600",
     cursor: "pointer",
-    textAlign: "center",
-    display: "inline-block",
+  },
+  modalButtonConfirmDisabled: {
+    padding: "8px 12px",
+    backgroundColor: "#475569",
+    color: "#94A3B8",
+    border: "none",
+    borderRadius: "6px",
+    fontSize: "12px",
+    cursor: "not-allowed",
+    opacity: 0.5,
+  },
+  modalButtonConfirmActive: {
+    padding: "8px 12px",
+    backgroundColor: "#F43F5E",
+    color: "#FFFFFF",
+    border: "none",
+    borderRadius: "6px",
+    fontSize: "12px",
+    fontWeight: "bold",
+    cursor: "pointer",
   },
 };

@@ -2,14 +2,14 @@
 
 ## 1. Overview
 
-Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leveraging event-driven background tab monitoring, break-page tab focus redirection, real-time storage configuration sync, and a full Rule Management Settings Page.
+Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leveraging event-driven background tab monitoring, break-page tab focus redirection, real-time storage configuration sync, mindful pause friction controls, and a full Rule Management Settings Page.
 
 ## 2. Architecture & Adapters (`apps/extension`)
 
 ### 2.1 Storage Adapter (`ExtensionStorage.ts`)
 
 - Implements `IStorageProvider` using `browser.storage.local` / `chrome.storage.local`.
-- Syncs state changes cleanly with `@off-ramp/core` and persists active accumulated target screen time.
+- Syncs state changes cleanly with `@off-ramp/core` and persists active accumulated target screen time and pause status with automatic expiration timestamps.
 
 ### 2.2 Activity Monitor Adapter (`WebTabMonitor.ts`)
 
@@ -27,13 +27,18 @@ Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leve
 - **Dynamic Target Addition**: Automatically tracks screen time on newly added targets as soon as they are assigned to a rule.
 - **Limit Increase & Active Break Clearance**: If a rule's allowed time limit is increased beyond accumulated screen time, any active break cooldown for that rule is automatically cleared.
 - **Accumulator Hydration**: Hydrates `TimerService` accumulators from `off_ramp_accumulators` in storage on background startup.
+- **Auto-Unpause Expiration**: Background checks `off_ramp_paused_until` timestamp and automatically resumes active monitoring when a temporary pause expires.
 
 ## 3. UI Components
 
 ### 3.1 Popup UI (`src/popup/index.tsx`)
 
 - Quick extension toolbar status popup.
-- **Monitoring Status Badge**: Shows ACTIVE / PAUSED status with toggle control.
+- **Monitoring Status & Mindful Pause Friction**:
+  - Shows ACTIVE / PAUSED status.
+  - **Mindful Pause Friction**: Pausing Off-Ramp cannot be done accidentally or with a single instant click. Pausing requires intentional friction:
+    - **Hold-to-Pause or Reflection Delay**: User must press & hold the Pause button for 3 seconds or complete a 10-second reflection prompt (*"Why do you need to pause Off-Ramp?"*).
+    - **Timed Pause Selection**: User selects a temporary pause duration (e.g. 5 mins, 15 mins). After expiration, Off-Ramp automatically unpauses itself.
 - **Real-Time Rule Screen Time & Remaining Time Cards**:
   - Displays each rule and its assigned target websites (e.g., `Rule: Reddit, TikTok, YouTube`).
   - Displays aggregated real-time accumulated screen time (sum of all covered websites) vs. allowed limit ($A / X$ mins) and remaining time until interruption.
@@ -66,5 +71,6 @@ Build a fully functional browser extension (Firefox & Chrome) using Plasmo, leve
 - Plasmo build succeeds for Firefox target.
 - Users can create, edit, toggle, and delete rules via the Options Page.
 - Dynamic target additions and limit increases take effect in real time without restarting the extension.
+- Pause control enforces intentional friction (hold-to-pause / timed reflection prompt) to prevent impulse pausing.
 - Popup UI displays real-time remaining screen time per target website.
 - Break page disables return button while timer is running and avoids auto-redirection on completion.

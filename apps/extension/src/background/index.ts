@@ -77,11 +77,23 @@ async function runEvaluation() {
     await reloadConfig();
 
     const isPaused = (await storage.load("off_ramp_paused")) === "true";
-    if (isPaused) {
+    const pausedUntilStr = await storage.load("off_ramp_paused_until");
+
+    if (isPaused && pausedUntilStr) {
+      const pausedUntilMs = parseInt(pausedUntilStr, 10);
+      if (!isNaN(pausedUntilMs) && Date.now() >= pausedUntilMs) {
+        await storage.save("off_ramp_paused", "false");
+        await storage.save("off_ramp_paused_until", "");
+        console.log("[Off-Ramp] Session pause expired — monitoring resumed automatically.");
+      }
+    }
+
+    const currentPausedState = (await storage.load("off_ramp_paused")) === "true";
+    if (currentPausedState) {
       engine.getTimerService().tick(null);
       const accumulators = engine.getTimerService().getAllAccumulators();
       await storage.save("off_ramp_accumulators", JSON.stringify(accumulators));
-      console.log("[Off-Ramp] Monitoring is PAUSED - screen time frozen.");
+      console.log("[Off-Ramp] Monitoring is PAUSED — screen time frozen.");
       return;
     }
 
