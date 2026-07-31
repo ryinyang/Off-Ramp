@@ -20,6 +20,12 @@ export class ConfigManager {
           identifier: "reddit.com",
           type: "website",
         },
+        {
+          id: "target-youtube",
+          name: "YouTube",
+          identifier: "youtube.com",
+          type: "website",
+        },
       ],
       schedules: [
         {
@@ -37,7 +43,7 @@ export class ConfigManager {
           allowedMinutes: 1,
           interruptionSeconds: 30,
           message: "Hey! Time to take a break and give yourself an off-ramp.",
-          targetIds: ["target-tiktok", "target-reddit"],
+          targetIds: ["target-tiktok", "target-reddit", "target-youtube"],
           scheduleId: "sched-workdays",
           enabled: true,
         },
