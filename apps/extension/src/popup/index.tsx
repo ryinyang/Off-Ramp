@@ -5,22 +5,52 @@ import { BrowserApi } from "../utils/BrowserApi";
 
 const REQUIRED_PHRASE = "I am choosing to pause Off-Ramp";
 
+const configManager = new ConfigManager();
+const storage = new ExtensionStorage();
+
 export default function Popup() {
   const [config, setConfig] = useState<UserConfig | null>(null);
   const [accumulators, setAccumulators] = useState<Record<string, number>>({});
   const [isMonitoring, setIsMonitoring] = useState(true);
-  const [pausedUntilStr, setPausedUntilStr] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
 
   // Mindful Pause Modal state
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [typedPhrase, setTypedPhrase] = useState("");
 
-  const configManager = new ConfigManager();
-  const storage = new ExtensionStorage();
-
   useEffect(() => {
     document.title = "Off-Ramp Toolbar Popup";
+
+    const loadConfig = async () => {
+      const pausedVal = await storage.load("off_ramp_paused");
+
+      setIsMonitoring(pausedVal !== "true");
+
+      const storedJson = await storage.load("off_ramp_config");
+      if (storedJson) {
+        try {
+          const parsed = configManager.parseConfig(storedJson);
+          setConfig(parsed);
+          return;
+        } catch (e) {
+          console.error("Config parse failed:", e);
+        }
+      }
+      const defaultConfig = ConfigManager.createDefaultConfig();
+      setConfig(defaultConfig);
+    };
+
+    const loadAccumulators = async () => {
+      const json = await storage.load("off_ramp_accumulators");
+      if (json) {
+        try {
+          setAccumulators(JSON.parse(json));
+        } catch {
+          // Ignore JSON parse error
+        }
+      }
+    };
+
     loadConfig();
     loadAccumulators();
 
@@ -32,27 +62,6 @@ export default function Popup() {
 
     return () => clearInterval(interval);
   }, []);
-
-  const loadConfig = async () => {
-    const pausedVal = await storage.load("off_ramp_paused");
-    const untilVal = await storage.load("off_ramp_paused_until");
-
-    setIsMonitoring(pausedVal !== "true");
-    setPausedUntilStr(untilVal || null);
-
-    const storedJson = await storage.load("off_ramp_config");
-    if (storedJson) {
-      try {
-        const parsed = configManager.parseConfig(storedJson);
-        setConfig(parsed);
-        return;
-      } catch (e) {
-        console.error("Config parse failed:", e);
-      }
-    }
-    const defaultConfig = ConfigManager.createDefaultConfig();
-    setConfig(defaultConfig);
-  };
 
   const getSessionEndInfo = (): { endMs: number; timeStr: string } => {
     const now = new Date();
@@ -112,24 +121,12 @@ export default function Popup() {
 
   const handleUnpause = async () => {
     setIsMonitoring(true);
-    setPausedUntilStr(null);
 
     await storage.save("off_ramp_paused", "false");
     await storage.save("off_ramp_paused_until", "");
 
     setStatusMessage("Off-Ramp monitoring resumed! 🛡️");
     setTimeout(() => setStatusMessage(""), 2500);
-  };
-
-  const loadAccumulators = async () => {
-    const json = await storage.load("off_ramp_accumulators");
-    if (json) {
-      try {
-        setAccumulators(JSON.parse(json));
-      } catch {
-        // Ignore JSON parse error
-      }
-    }
   };
 
   const saveConfig = async (newConfig: UserConfig) => {
@@ -145,7 +142,7 @@ export default function Popup() {
       await navigator.clipboard.writeText(jsonStr);
       setStatusMessage("Config copied to clipboard! 📋");
       setTimeout(() => setStatusMessage(""), 3000);
-    } catch (_err) {
+    } catch {
       setStatusMessage("Failed to copy to clipboard.");
       setTimeout(() => setStatusMessage(""), 3000);
     }
@@ -163,7 +160,7 @@ export default function Popup() {
       await saveConfig(parsed);
       setStatusMessage("Config pasted & imported! 🚀");
       setTimeout(() => setStatusMessage(""), 3000);
-    } catch (_err) {
+    } catch {
       setStatusMessage("Import failed: Invalid JSON on clipboard.");
       setTimeout(() => setStatusMessage(""), 3000);
     }

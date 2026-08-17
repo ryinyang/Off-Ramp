@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { ConfigManager, UserConfig, Rule, Target, DomainUtils } from "@off-ramp/core";
 import { ExtensionStorage } from "../adapters/ExtensionStorage";
 
+const storage = new ExtensionStorage();
+const configManager = new ConfigManager();
+
 export default function Options() {
   const [config, setConfig] = useState<UserConfig | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
@@ -15,28 +18,26 @@ export default function Options() {
   const [newTargetDomain, setNewTargetDomain] = useState("");
   const [isAddingTarget, setIsAddingTarget] = useState(false);
 
-  const storage = new ExtensionStorage();
-  const configManager = new ConfigManager();
-
   useEffect(() => {
     document.title = "Off-Ramp Settings & Rule Configurator";
+
+    const loadConfig = async () => {
+      const storedJson = await storage.load("off_ramp_config");
+      if (storedJson) {
+        try {
+          const parsed = configManager.parseConfig(storedJson);
+          setConfig(parsed);
+          return;
+        } catch (e) {
+          console.error("[Off-Ramp] Config parse error:", e);
+        }
+      }
+      const defaultConfig = ConfigManager.createDefaultConfig();
+      setConfig(defaultConfig);
+    };
+
     loadConfig();
   }, []);
-
-  const loadConfig = async () => {
-    const storedJson = await storage.load("off_ramp_config");
-    if (storedJson) {
-      try {
-        const parsed = configManager.parseConfig(storedJson);
-        setConfig(parsed);
-        return;
-      } catch (e) {
-        console.error("[Off-Ramp] Config parse error:", e);
-      }
-    }
-    const defaultConfig = ConfigManager.createDefaultConfig();
-    setConfig(defaultConfig);
-  };
 
   const saveConfig = async (newConfig: UserConfig) => {
     setConfig(newConfig);
@@ -157,7 +158,7 @@ export default function Options() {
       const jsonStr = configManager.serializeConfig(config);
       await navigator.clipboard.writeText(jsonStr);
       showStatus("Configuration copied to clipboard! 📋");
-    } catch (_err) {
+    } catch {
       showStatus("Failed to copy to clipboard.");
     }
   };
@@ -172,7 +173,7 @@ export default function Options() {
       const parsed = configManager.parseConfig(text);
       await saveConfig(parsed);
       showStatus("Imported configuration from clipboard! 🚀");
-    } catch (_err) {
+    } catch {
       showStatus("Import failed: Invalid JSON format on clipboard.");
     }
   };

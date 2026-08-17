@@ -1,110 +1,114 @@
-# Off-Ramp 🛑📱
+# Off-Ramp
 
-**Off-Ramp** is an open-source, cross-platform app designed to interrupt doom scrolling.
+Off-Ramp is an open-source, cross-platform application that interrupts excessive screen time.
 
-Instead of using easy-to-dismiss floating popups or completely blocking your apps, Off-Ramp enforces a **forced focus switch**: whenever you reach your screen time limit on a monitored website or application, Off-Ramp automatically intercepts your navigation and redirects your focus directly to a dedicated, mindful break screen with a countdown reflection timer. This creates an intentional friction point that helps you break the habit loop and step away.
+Off-Ramp does not use floating popups that you can dismiss easily. Off-Ramp does not block your applications permanently. Instead, Off-Ramp redirects your active view. When you reach your screen time limit on a monitored website or application, Off-Ramp redirects you to a break page. The break page shows a countdown timer. This break helps you stop repetitive device usage.
 
 ---
 
-## 🏗️ Monorepo Architecture
+## Monorepo Structure
 
-Off-Ramp is organized as a high-performance monorepo using **Turborepo** and **npm Workspaces**:
+Off-Ramp uses Turborepo and npm Workspaces to manage packages:
 
-```
+```text
 off_ramp/
 ├── packages/
-│   ├── core/         # Pure TypeScript logic: schemas, state, utilities, and strategy contracts
-│   └── ui/           # Shared cross-platform design tokens and UI components
+│   ├── core/         # TypeScript logic: schemas, state, utilities, and adapter interfaces
+│   └── ui/           # Shared design tokens and user interface components
 └── apps/
-    ├── extension/    # Firefox browser extension (built with Plasmo & React 18)
-    └── mobile/       # Mobile application (built with Expo & React Native)
+    ├── extension/    # Mozilla Firefox browser extension (Plasmo and React 18)
+    └── mobile/       # Mobile application (Expo and React Native)
 ```
 
 ### Core Architecture (`@off-ramp/core`)
 
-The brain of Off-Ramp lives in `packages/core` with zero platform or UI dependencies:
+The [`packages/core`](file:///home/ryan/off_ramp/packages/core) package contains the application logic without platform or user interface dependencies:
 
-- **Domain Schemas (`src/types/config.ts`)**: Zod-validated data models for `Target`, `Schedule`, `Rule`, and versioned `UserConfig`.
-- **Strategy Contracts (`src/adapters/`)**:
-  - `IPlatformMonitor`: Interface for querying current active application/website.
-  - `IPlatformTrigger`: Interface for executing focus-switch break interruptions.
-  - `IStorageProvider`: Interface for local state persistence.
-- **Core Services (`src/services/`)**:
-  - `TimerService`: Tracks screen time at the **Rule Level** (`rule.id`) using event-driven timestamp diffing.
-  - `ScheduleEvaluator`: Evaluates active monitoring time windows.
-  - `InterruptionEngine`: Main orchestrator firing focus-switch triggers when rule limits are reached and enforcing active break cooldowns across all tabs/apps.
-  - `ConfigManager`: Manages Zod parsing, default initialization, and schema migrations.
-- **Core Utilities (`src/utils/`)**:
-  - `DomainUtils`: Canonical URL normalization, exact/subdomain matching, and target filtering.
-  - `TimeUtils`: Screen time unit conversion, rule-level time calculations, and progress percentages.
-- **State Management (`src/store/useOffRampStore.ts`)**: Universal Zustand store supporting local state mutation and direct clipboard config sync.
-
----
-
-## 🔥 Key Extension Features
-
-1. **Rule-Level Screen Time Aggregation**:
-   - Timers are accumulated per rule. If a rule covers multiple websites (e.g. `reddit.com`, `tiktok.com`, `youtube.com`), screen time spent across all covered sites is summed toward the rule's limit.
-2. **Active Break Cooldown Enforcement**:
-   - While a break is active ($now < activeBreakUntil$), opening or switching to ANY targeted website/app immediately redirects to the break page for the remaining break duration. Non-targeted sites remain accessible.
-3. **Dedicated Rule Management Settings Page** (`src/options/index.tsx`):
-   - Full UI to create, edit, toggle, and delete anti-doomscrolling rules and website domain targets.
-4. **Strict Break Page Enforcement** (`src/tabs/break.tsx`):
-   - "Return to Previous Page" button is disabled while the break timer is active. Auto-redirection on completion is disabled, requiring explicit user interaction.
-5. **Direct Clipboard Config Sync**:
-   - Instant "Copy Config" and "Paste Config" via system clipboard (`navigator.clipboard`).
-6. **Background Pause & Timer Freezing**:
-   - Toggling "Pause Off-Ramp" freezes screen time accumulation and pauses background evaluation ticks.
+- **Domain Schemas ([`config.ts`](file:///home/ryan/off_ramp/packages/core/src/types/config.ts))**: Zod schemas for `Target`, `Schedule`, `Rule`, and versioned `UserConfig`.
+- **Adapter Interfaces ([`src/adapters/`](file:///home/ryan/off_ramp/packages/core/src/adapters))**:
+  - [`IPlatformMonitor`](file:///home/ryan/off_ramp/packages/core/src/adapters/IPlatformMonitor.ts): Queries the active application or website.
+  - [`IPlatformTrigger`](file:///home/ryan/off_ramp/packages/core/src/adapters/IPlatformTrigger.ts): Executes the break redirect.
+  - [`IStorageProvider`](file:///home/ryan/off_ramp/packages/core/src/adapters/IStorageProvider.ts): Persists local state.
+- **Core Services ([`src/services/`](file:///home/ryan/off_ramp/packages/core/src/services))**:
+  - [`TimerService`](file:///home/ryan/off_ramp/packages/core/src/services/TimerService.ts): Tracks screen time for each rule with event-driven timestamp differences.
+  - [`ScheduleEvaluator`](file:///home/ryan/off_ramp/packages/core/src/services/ScheduleEvaluator.ts): Evaluates active monitoring time windows.
+  - [`InterruptionEngine`](file:///home/ryan/off_ramp/packages/core/src/services/InterruptionEngine.ts): Executes break triggers when rules reach limits and applies cooldowns.
+  - [`ConfigManager`](file:///home/ryan/off_ramp/packages/core/src/services/ConfigManager.ts): Manages schema validation, default settings, and migrations.
+- **Core Utilities ([`src/utils/`](file:///home/ryan/off_ramp/packages/core/src/utils))**:
+  - [`DomainUtils`](file:///home/ryan/off_ramp/packages/core/src/utils/DomainUtils.ts): Normalizes URLs, matches subdomains, and filters targets.
+  - [`TimeUtils`](file:///home/ryan/off_ramp/packages/core/src/utils/TimeUtils.ts): Converts time units, calculates rule time, and computes progress.
+- **State Management ([`useOffRampStore.ts`](file:///home/ryan/off_ramp/packages/core/src/store/useOffRampStore.ts))**: Zustand store that updates local state and synchronizes configuration through the system clipboard.
 
 ---
 
-## ⚡ Quick Start
+## Key Extension Features
+
+1. **Rule-Level Time Tracking**:
+   - The extension sums screen time per rule. If a rule contains multiple websites, the extension combines the time spent across all listed websites.
+2. **Active Break Cooldown**:
+   - When a break is active, any attempt to open a monitored website redirects immediately to the break page. Non-monitored websites remain available.
+3. **Rule Management Page** ([`index.tsx`](file:///home/ryan/off_ramp/apps/extension/src/options/index.tsx)):
+   - A user interface lets you create, edit, toggle, and delete rules and domain targets.
+4. **Break Page Control** ([`break.tsx`](file:///home/ryan/off_ramp/apps/extension/src/tabs/break.tsx)):
+   - The break page disables the return button until the timer finishes. The page does not redirect automatically, which requires user confirmation.
+5. **Clipboard Configuration Synchronization**:
+   - You can copy and paste configuration data directly through the system clipboard.
+6. **Background Pause**:
+   - When you pause Off-Ramp, the extension stops time accumulation and timer evaluations.
+
+---
+
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js**: v18.0.0 or higher
-- **npm**: v9.0.0 or higher
+- **Node.js**: Version 18.0.0 or higher
+- **npm**: Version 9.0.0 or higher
 
-### Installation & Build
+### Installation and Build
 
-```bash
-# Install dependencies across all packages
-npm install
-
-# Build all monorepo packages
-npm run build
-
-# Run unit tests across core logic (26/26 tests passing across 8 suites)
-npm run test
-```
-
----
-
-## 🦊 Testing the Firefox Extension
-
-1. Build the extension bundle:
+1. Install dependencies for all packages:
+   ```bash
+   npm install
+   ```
+2. Build all monorepo packages:
    ```bash
    npm run build
    ```
-2. Open **Mozilla Firefox** and navigate to:
-   ```text
-   about:debugging#/runtime/this-firefox
+3. Run the unit tests:
+   ```bash
+   npm run test
    ```
-3. Click **Load Temporary Add-on...**
-4. Select `manifest.json` located inside:
-   ```text
-   apps/extension/build/firefox-mv2-prod/manifest.json
-   ```
-5. Click the **Off-Ramp icon** in the Firefox toolbar to open the popup UI.
-6. Click **⚙️ Settings & Rules** to open the full Rule Management Settings Page.
-7. Open a tab to `https://www.reddit.com`. When your limit is reached, Off-Ramp will automatically redirect the tab to an internal break page (`tabs/break.html`) displaying a countdown timer and reflection prompt.
 
 ---
 
-## 🛠️ Development Commands
+## Test the Firefox Extension
 
-| Command                                       | Action                                                                                               |
-| :-------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
-| `npm run build`                               | Builds all packages (`packages/core`, `packages/ui`, `apps/extension`, `apps/mobile`) via Turborepo. |
-| `npm run test`                                | Runs the Vitest test suite across `@off-ramp/core`.                                                  |
-| `npm run dev --workspace=@off-ramp/extension` | Starts Plasmo dev server with hot-reloading for Firefox extension.                                   |
+1. Build the extension package:
+   ```bash
+   npm run build
+   ```
+2. Open **Mozilla Firefox**.
+3. Go to this address:
+   ```text
+   about:debugging#/runtime/this-firefox
+   ```
+4. Click **Load Temporary Add-on...**.
+5. Select the [`manifest.json`](file:///home/ryan/off_ramp/apps/extension/build/firefox-mv2-prod/manifest.json) file:
+   ```text
+   apps/extension/build/firefox-mv2-prod/manifest.json
+   ```
+6. Click the **Off-Ramp icon** in the Firefox toolbar to open the popup user interface.
+7. Click **Settings & Rules** to open the rule management page.
+8. Open a new tab and go to `https://www.reddit.com`.
+9. When you reach the time limit, Off-Ramp redirects the tab to the break page (`tabs/break.html`).
+
+---
+
+## Development Commands
+
+| Command                                       | Description                                                                                                                                                                                                                                                                        |
+| :-------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run build`                               | Builds all packages ([`packages/core`](file:///home/ryan/off_ramp/packages/core), [`packages/ui`](file:///home/ryan/off_ramp/packages/ui), [`apps/extension`](file:///home/ryan/off_ramp/apps/extension), [`apps/mobile`](file:///home/ryan/off_ramp/apps/mobile)) with Turborepo. |
+| `npm run test`                                | Runs the Vitest test suite for [`@off-ramp/core`](file:///home/ryan/off_ramp/packages/core).                                                                                                                                                                                       |
+| `npm run dev --workspace=@off-ramp/extension` | Starts the Plasmo development server with hot reload for the Firefox extension.                                                                                                                                                                                                    |
