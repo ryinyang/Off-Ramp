@@ -1,0 +1,35 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <!-- Package visibility (Android 11+): required to list installed launchable apps
+       for the TargetSelectorScreen app picker without the restricted QUERY_ALL_PACKAGES permission. -->
+  <queries>
+    <intent>
+      <action android:name="android.intent.action.MAIN" />
+      <category android:name="android.intent.category.LAUNCHER" />
+    </intent>
+  </queries>
+
+  <application>
+    <service
+      android:name=".OffRampAccessibilityService"
+      android:exported="true"
+      android:label="@string/accessibility_service_label"
+      android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+      <intent-filter>
+        <action android:name="android.accessibilityservice.AccessibilityService" />
+      </intent-filter>
+      <meta-data
+        android:name="android.accessibilityservice"
+        android:resource="@xml/accessibility_service_config" />
+    </service>
+
+    <service
+      android:name=".OffRampForegroundService"
+      android:exported="false"
+      android:foregroundServiceType="specialUse">
+      <property
+        android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+        android:value="Monitors screen time on user-selected apps/websites to enforce the user's own focus limits." />
+    </service>
+  </application>
+</manifest>

@@ -1,0 +1,7 @@
+<resources>
+  <string name="accessibility_service_label">Off-Ramp Focus Switch</string>
+  <string name="accessibility_service_description">Lets Off-Ramp pull your screen back to the break page the instant one of your own screen-time limits is reached. Off-Ramp does not read screen content.</string>
+  <string name="monitor_notification_channel_name">Off-Ramp Monitoring</string>
+  <string name="monitor_notification_title">Off-Ramp is watching your limits</string>
+  <string name="monitor_notification_text">Monitoring your configured apps and websites in the background.</string>
+</resources>

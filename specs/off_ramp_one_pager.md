@@ -49,9 +49,10 @@ Instead of relying on easy-to-ignore floating overlays or full nuclear app block
 - [Plasmo](https://www.plasmo.com/) Manifest V3 framework. Uses `browser.tabs.onActivated` and `browser.tabs.onUpdated` event listeners in a background service worker alongside `storage.onChanged` real-time config listeners.
 - Intercepts target site visits and uses `browser.tabs.update(tabId, { url: breakPageUrl })` to redirect restricted tabs to an internal Off-Ramp break page.
 
-### NativeWind & Tailwind CSS
+### Styling
 
-- [NativeWind](https://www.nativewind.dev/) for cross-platform UI styling across mobile and extension settings pages.
+- `apps/mobile` uses React Native's built-in `StyleSheet` API, with a shared token file (`apps/mobile/src/theme.ts`) for colors, spacing, radius, and font sizes. The team tried [NativeWind](https://www.nativewind.dev/) first, as originally planned. On-device testing showed that NativeWind 4.2.6 (the latest stable release) does not apply `className` styles at all under the current Expo SDK 57 / React Native 0.86 / React 19.2 stack — confirmed with a minimal, isolated test element, a cleared Metro cache, and both the New and old React Native architecture. NativeWind's own npm listing carries a `5.0.0-preview` tag, which suggests v4 was not built against this newest React Native generation. `StyleSheet` has no such compatibility risk, so the team switched to it instead of shipping broken styling.
+- `apps/extension` uses plain inline style objects (see `apps/extension/src/options/index.tsx`), styled directly against the same color tokens as `packages/ui`.
 
 ### Zustand & Zod
 

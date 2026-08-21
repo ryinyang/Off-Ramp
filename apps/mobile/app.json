@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Off-Ramp",
+    "slug": "off-ramp",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "offramp",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0F172A",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.offramp.mobile",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.offramp.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#6366F1",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.PACKAGE_USAGE_STATS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_SPECIAL_USE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.WAKE_LOCK"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-system-ui",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0F172A",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 180
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

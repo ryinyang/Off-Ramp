@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Develop mobile apps for Android and iOS using React Native, Expo, NativeWind, featuring forced Focus-Switching (Android `AccessibilityService` launch intents + iOS Native `ManagedSettingsStore` Shields).
+Develop mobile apps for Android and iOS using React Native and Expo, featuring forced Focus-Switching (Android `AccessibilityService` launch intents + iOS Native `ManagedSettingsStore` Shields). UI styling uses React Native's built-in `StyleSheet` API rather than NativeWind — see "Styling" in `off_ramp_one_pager.md` for why.
 
 ## 2. Architecture & Adapters (`apps/mobile`)
 

@@ -6,3 +6,9 @@ build/
 .plasmo/
 *.log
 .DS_Store
+
+# Expo prebuild output (regenerated via `npm run prebuild` from app.json + modules/*)
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/expo-env.d.ts
+apps/mobile/.kotlin/

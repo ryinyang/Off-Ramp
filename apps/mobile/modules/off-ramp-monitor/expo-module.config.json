@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["OffRampMonitorModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.offrampmonitor.OffRampMonitorModule"]
+  }
+}

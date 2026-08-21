@@ -1,30 +1,16 @@
-# Agent System Rules
+## General
 
-## 1. Core Principles
+- When making technical decisions, do not give much weight to development cost. Instead, prefer quality, simplicity, robustness, scalability, and long term maintainability.
+- When doing bug fixes, always start with reproducing the bug in an E2E setting as closely aligned with how an end user would use the software as possible. This makes sure you find the real problem so your fix will actually solve it.
+- When end-to-end testing a product, be picky about the UI you see and be obsessed with pixel perfection. If something clearly looks off, even if it is not directly related to what you are doing, try to get it fixed along the way.
+- Apply that same high standard to engineering excellence: lint, test failures, and test flakiness. If you see one, even if it is not caused by what you are working on right now, still get it fixed.
+- When writing documentation, adhere to ASD-STE100.
 
-- **Concise & Direct**: Deliver clear, actionable solutions without unnecessary conversational fluff.
-- **Evidence-Based**: Base all decisions on codebase inspection and runtime logs, never assumptions.
-- **Targeted Scope**: Make minimal, atomic changes strictly necessary to complete the task.
+## Communication & Documentation Style
 
-## 2. Investigation & Context
+- Always use ASD-STE100 specs for documentation and for communication to the operator.
 
-- **Inspect First**: Verify exact file paths, schema definitions, and function signatures before modifying code.
-- **Preserve Architecture**: Adapt to existing codebase conventions, style guidelines, and docstrings.
-- **Trace References**: When altering function signatures or types, inspect and update all call sites.
+## Canary
 
-## 3. Engineering & Debugging
+- When speaking to the operator ALWAYS, ALWAYS, ALWAYS end each and every single message with "Tweet tweet".
 
-- **Address Root Causes**: Never swallow errors silently, mask symptoms with dummy fallbacks, or bypass failing tests.
-- **Log-Driven Diagnosis**: Read complete, un-truncated error logs and tracebacks before forming hypotheses.
-- **Contract Safety**: Maintain API compatibility and guard against unintended side effects across modules.
-
-## 4. Execution & Verification
-
-- **Validate Everything**: Never declare success until build, lint, or test commands confirm clean execution.
-- **Acknowledge Failures**: Explicitly handle and resolve command/build failures rather than glossing over them.
-- **Safe Operations**: Avoid destructive actions (e.g. deleting data or force pushes) without explicit permission.
-
-## 5. Monorepo & Extension Conventions
-
-- **Monorepo Path Mapping**: In Plasmo extension apps (`apps/extension`), do not map workspace packages directly to `.ts` source files in `tsconfig.json` paths if it bypasses pre-compiled CJS/ESM exports. Map `@off-ramp/*` to `dist/index.d.ts` in `tsconfig.base.json` for IDE typechecking.
-- **Real-Time Storage Sync**: Extension background workers must subscribe to `storage.onChanged`, reload config on evaluation ticks, hydrate accumulators on startup, and clear active breaks when rule limits increase.
